@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -iE '^dotenv$|^@nestjs$')",
+      "Bash(npm install *)",
+      "Bash(npx prisma *)",
+      "Bash(node -e \"console.log\\(require\\('crypto'\\).randomBytes\\(48\\).toString\\('hex'\\)\\)\")",
+      "Bash(xxd src/shared/infraestructure/prisma/prisma.service.ts)",
+      "Bash(node dist/src/main.js)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/api/v1/roles)",
+      "Read(//tmp/**)",
+      "Bash(kill %1)",
+      "Bash(timeout 8 node dist/src/main.js)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(disown)",
+      "Bash(tasklist //FI \"IMAGENAME eq node.exe\")",
+      "Bash(taskkill //F //PID 28200)",
+      "Bash(taskkill //F //PID 23656)",
+      "Bash(taskkill //F //PID 17792)",
+      "Bash(node \"C:\\\\Users\\\\Melan\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Melan-OneDrive-Documents-SOFTWARE-aso-fisei-asociacion-backend\\\\386fefd9-8839-492e-85a6-a981cb2e7854\\\\scratchpad\\\\check-auditoria.js\")",
+      "Bash(node -e ' *)"
+    ]
+  }
+}
