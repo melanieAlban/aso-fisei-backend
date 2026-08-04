@@ -166,3 +166,124 @@ model ConfiguracionSistema {
 
   @@map("configuracion_sistema")
 }
+
+model Caja {
+  id                   String     @id @default(uuid())
+  usuarioAperturaId    String
+  usuarioCierreId      String?
+  fondoInicialEfectivo Decimal    @db.Decimal(10, 2)
+  estado               EstadoCaja @default(ABIERTA)
+  fechaApertura        DateTime   @default(now())
+  fechaCierre          DateTime?
+
+  ventas Venta[]
+  arqueo ArqueoCaja?
+
+  @@map("cajas")
+}
+
+enum EstadoCaja {
+  ABIERTA
+  CERRADA
+}
+
+model ArqueoCaja {
+  id                         String                    @id @default(uuid())
+  cajaId                     String                    @unique
+  usuarioId                  String
+  efectivoEsperado           Decimal                   @db.Decimal(10, 2)
+  efectivoContado            Decimal                   @db.Decimal(10, 2)
+  transferenciaEsperado      Decimal                   @db.Decimal(10, 2)
+  transferenciaContado       Decimal                   @db.Decimal(10, 2)
+  montoRetiradoEfectivo      Decimal                   @db.Decimal(10, 2)
+  montoRetiradoTransferencia Decimal                   @db.Decimal(10, 2)
+  montoDejadoFondoCambio     Decimal                   @db.Decimal(10, 2)
+  clasificacionDiferencia    ClasificacionDiferencia?
+  fecha                      DateTime                  @default(now())
+
+  caja Caja @relation(fields: [cajaId], references: [id])
+
+  @@map("arqueos_caja")
+}
+
+enum ClasificacionDiferencia {
+  GANANCIA
+  PERDIDA
+  PENDIENTE
+}
+
+model Venta {
+  id         String   @id @default(uuid())
+  usuarioId  String
+  cajaId     String
+  metodoPago MetodoPago
+  total      Decimal  @db.Decimal(10, 2)
+  fecha      DateTime @default(now())
+
+  caja    Caja           @relation(fields: [cajaId], references: [id])
+  detalle DetalleVenta[]
+
+  @@map("ventas")
+}
+
+enum MetodoPago {
+  EFECTIVO
+  TRANSFERENCIA
+}
+
+model DetalleVenta {
+  id                 String              @id @default(uuid())
+  ventaId            String
+  productoId         String
+  cantidad           Int
+  precioUnitario     Decimal             @db.Decimal(10, 2)
+  esAlquiler         Boolean             @default(false)
+  estadoAlquiler     EstadoAlquiler?
+  estado             EstadoDetalleVenta  @default(ACTIVO)
+  motivoAnulacion    String?
+  usuarioAnulacionId String?
+
+  venta Venta @relation(fields: [ventaId], references: [id])
+
+  @@map("detalle_venta")
+}
+
+enum EstadoAlquiler {
+  DEVUELTO
+  PENDIENTE
+}
+
+enum EstadoDetalleVenta {
+  ACTIVO
+  ANULADO
+}
+
+model MovimientoFondoGeneral {
+  id                            String               @id @default(uuid())
+  usuarioId                     String
+  tipo                          TipoMovimientoFondo
+  monto                         Decimal              @db.Decimal(10, 2)
+  metodoPago                    MetodoPago
+  saldoResultanteEfectivo       Decimal              @db.Decimal(10, 2)
+  saldoResultanteTransferencia  Decimal              @db.Decimal(10, 2)
+  referenciaId                  String?
+  descripcion                   String?
+  fecha                         DateTime             @default(now())
+
+  @@map("movimientos_fondo_general")
+}
+
+enum TipoMovimientoFondo {
+  RETIRO_CAJA
+  GASTO
+  AJUSTE_INICIAL
+  UTILIDAD_EVENTO
+}
+
+model SaldoGlobal {
+  id                 Int     @id @default(1)
+  saldoEfectivo      Decimal @db.Decimal(10, 2) @default(0)
+  saldoTransferencia Decimal @db.Decimal(10, 2) @default(0)
+
+  @@map("saldo_global")
+}

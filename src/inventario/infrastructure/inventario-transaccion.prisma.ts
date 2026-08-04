@@ -37,6 +37,35 @@ export class InventarioTransaccionPrisma implements InventarioTransaccionPort {
         },
       });
 
+      if (datos.fuentePago === 'FONDO_GENERAL') {
+        if (!datos.moneda) {
+          throw new Error(
+            'Debe indicar la moneda (EFECTIVO o TRANSFERENCIA) cuando la compra se paga desde el Fondo General',
+          );
+        }
+
+        const saldoActualizado = await tx.saldoGlobal.update({
+          where: { id: 1 },
+          data:
+            datos.moneda === 'EFECTIVO'
+              ? { saldoEfectivo: { decrement: montoTotal } }
+              : { saldoTransferencia: { decrement: montoTotal } },
+        });
+
+        await tx.movimientoFondoGeneral.create({
+          data: {
+            usuarioId: datos.usuarioId,
+            tipo: 'GASTO',
+            monto: montoTotal,
+            metodoPago: datos.moneda,
+            saldoResultanteEfectivo: saldoActualizado.saldoEfectivo,
+            saldoResultanteTransferencia: saldoActualizado.saldoTransferencia,
+            referenciaId: gasto.id,
+            descripcion: gasto.descripcion,
+          },
+        });
+      }
+
       const movimiento = new MovimientoInventario(
         crypto.randomUUID(),
         datos.productoId,

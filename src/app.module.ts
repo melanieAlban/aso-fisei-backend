@@ -7,6 +7,7 @@ import { AllExceptionsFilter } from './shared/infraestructure/filters/all-except
 import { AuditoriaInterceptor } from './shared/infraestructure/auditoria/auditoria.interceptor';
 import { TransformInterceptor } from './shared/infraestructure/interceptors/transform.interceptor';
 import { PrismaModule } from './shared/infraestructure/prisma/prisma.module';
+import { CajaModule } from './caja/infrastructure/caja.module';
 import { InventarioModule } from './inventario/infrastructure/inventario.module';
 import { UsuariosModule } from './usuarios/infrastructure/usuarios.module';
 
@@ -16,6 +17,7 @@ import { UsuariosModule } from './usuarios/infrastructure/usuarios.module';
     PrismaModule,
     UsuariosModule,
     InventarioModule,
+    CajaModule,
   ],
   controllers: [AppController],
   providers: [
