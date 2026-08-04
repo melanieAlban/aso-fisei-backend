@@ -7,3 +7,162 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Usuario {
+  id                String    @id @default(uuid())
+  nombre            String
+  usuario             String    @unique
+  passwordHash      String
+  activo            Boolean   @default(true)
+  fechaUltimoAcceso DateTime?
+  createdAt         DateTime  @default(now())
+
+  roles             UsuarioRol[]
+  permisosExtra     UsuarioPermisoExtra[] @relation("PermisosExtra")
+  permisosOtorgados UsuarioPermisoExtra[] @relation("PermisosOtorgados")
+  auditorias        Auditoria[]
+
+  @@map("usuarios")
+}
+
+model Rol {
+  id     String @id @default(uuid())
+  nombre String @unique
+
+  usuarios UsuarioRol[]
+  permisos RolPermiso[]
+
+  @@map("roles")
+}
+
+model Permiso {
+  id          String @id @default(uuid())
+  codigo      String @unique
+  descripcion String
+
+  roles         RolPermiso[]
+  usuariosExtra UsuarioPermisoExtra[]
+
+  @@map("permisos")
+}
+
+model UsuarioRol {
+  usuarioId String
+  rolId     String
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+  rol     Rol     @relation(fields: [rolId], references: [id])
+
+  @@id([usuarioId, rolId])
+  @@map("usuario_rol")
+}
+
+model RolPermiso {
+  rolId     String
+  permisoId String
+
+  rol     Rol     @relation(fields: [rolId], references: [id])
+  permiso Permiso @relation(fields: [permisoId], references: [id])
+
+  @@id([rolId, permisoId])
+  @@map("rol_permiso")
+}
+
+model UsuarioPermisoExtra {
+  id                   String   @id @default(uuid())
+  usuarioId            String
+  permisoId            String
+  otorgadoPorUsuarioId String
+  fecha                DateTime @default(now())
+
+  usuario     Usuario @relation("PermisosExtra", fields: [usuarioId], references: [id])
+  permiso     Permiso @relation(fields: [permisoId], references: [id])
+  otorgadoPor Usuario @relation("PermisosOtorgados", fields: [otorgadoPorUsuarioId], references: [id])
+
+  @@map("usuario_permiso_extra")
+}
+
+model Auditoria {
+  id               String   @id @default(uuid())
+  usuarioId        String?
+  modulo           String
+  accion           String
+  registroAfectado String?
+  valorAnterior    Json?
+  valorNuevo       Json?
+  fecha            DateTime @default(now())
+
+  usuario Usuario? @relation(fields: [usuarioId], references: [id])
+
+  @@map("auditoria")
+}
+
+model Producto {
+  id            String   @id @default(uuid())
+  nombre        String
+  costoUnitario Decimal  @db.Decimal(10, 2) @default(0)
+  precioVenta   Decimal  @db.Decimal(10, 2)
+  stockActual   Int      @default(0)
+  activo        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  movimientos MovimientoInventario[]
+
+  @@map("productos")
+}
+
+model MovimientoInventario {
+  id         String                   @id @default(uuid())
+  productoId String
+  usuarioId  String
+  tipo       TipoMovimientoInventario
+  cantidad   Int
+  motivo     String?
+  gastoId    String?                  @unique
+  fecha      DateTime                 @default(now())
+
+  producto Producto @relation(fields: [productoId], references: [id])
+  gasto    Gasto?   @relation(fields: [gastoId], references: [id])
+
+  @@map("movimientos_inventario")
+}
+
+enum TipoMovimientoInventario {
+  COMPRA
+  VENTA
+  PERDIDA
+  AJUSTE
+}
+
+model Gasto {
+  id                      String      @id @default(uuid())
+  usuarioId               String
+  descripcion             String
+  monto                   Decimal     @db.Decimal(10, 2)
+  categoria               String
+  fuentePago              FuentePago
+  generadoAutomaticamente Boolean     @default(false)
+  estado                  EstadoGasto @default(ACTIVO)
+  fecha                   DateTime    @default(now())
+
+  movimientoInventario MovimientoInventario?
+
+  @@map("gastos")
+}
+
+enum FuentePago {
+  EFECTIVO_CAJA
+  FONDO_GENERAL
+}
+
+enum EstadoGasto {
+  ACTIVO
+  ANULADO
+}
+
+model ConfiguracionSistema {
+  clave String @id
+  valor String
+
+  @@map("configuracion_sistema")
+}
