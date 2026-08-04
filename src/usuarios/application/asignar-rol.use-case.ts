@@ -1,3 +1,4 @@
+import { ConflictError } from '../../shared/domain/errors';
 import { UsuarioRolRepository } from '../domain/usuario-rol.repository';
 
 export class AsignarRolUseCase {
@@ -10,7 +11,7 @@ export class AsignarRolUseCase {
     );
 
     if (yaExiste) {
-      throw new Error('El usuario ya tiene asignado ese rol');
+      throw new ConflictError('El usuario ya tiene asignado ese rol');
     }
 
     await this.usuarioRolRepository.asignar(datos.usuarioId, datos.rolId);

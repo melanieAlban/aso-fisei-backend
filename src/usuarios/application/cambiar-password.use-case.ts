@@ -1,4 +1,5 @@
 import * as bcrypt from 'bcrypt';
+import { NotFoundError } from '../../shared/domain/errors';
 import { Usuario } from '../domain/usuario.entity';
 import { UsuarioRepository } from '../domain/usuario.repository';
 
@@ -11,7 +12,7 @@ export class CambiarPasswordUseCase {
     const usuario = await this.usuarioRepository.buscarPorId(datos.usuarioId);
 
     if (!usuario) {
-      throw new Error('Usuario no encontrado');
+      throw new NotFoundError('Usuario no encontrado');
     }
 
     const passwordHash = await bcrypt.hash(datos.nuevoPassword, SALT_ROUNDS);

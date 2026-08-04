@@ -1,3 +1,4 @@
+import { ConflictError } from '../../shared/domain/errors';
 import { Usuario } from '../domain/usuario.entity';
 import { UsuarioRepository } from '../domain/usuario.repository';
 
@@ -12,7 +13,7 @@ export class CrearUsuarioUseCase {
     const existente = await this.usuarioRepository.buscarPorUsuario(datos.usuario);
 
     if (existente) {
-      throw new Error('Ya existe un usuario con ese nombre de usuario');
+      throw new ConflictError('Ya existe un usuario con ese nombre de usuario');
     }
 
     const nuevoUsuario = new Usuario(

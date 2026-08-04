@@ -1,3 +1,4 @@
+import { NotFoundError } from '../../shared/domain/errors';
 import { ArqueoCaja, ClasificacionDiferencia } from '../domain/arqueo-caja.entity';
 import { ArqueoCajaRepository } from '../domain/arqueo-caja.repository';
 
@@ -11,7 +12,7 @@ export class ClasificarDiferenciaArqueoUseCase {
     const arqueo = await this.arqueoCajaRepository.buscarPorId(datos.arqueoId);
 
     if (!arqueo) {
-      throw new Error('Arqueo no encontrado');
+      throw new NotFoundError('Arqueo no encontrado');
     }
 
     return this.arqueoCajaRepository.actualizarClasificacion(datos.arqueoId, datos.clasificacion);

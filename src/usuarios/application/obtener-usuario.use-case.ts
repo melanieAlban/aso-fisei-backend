@@ -1,3 +1,4 @@
+import { NotFoundError } from '../../shared/domain/errors';
 import { Usuario } from '../domain/usuario.entity';
 import { UsuarioRepository } from '../domain/usuario.repository';
 
@@ -8,7 +9,7 @@ export class ObtenerUsuarioUseCase {
     const usuario = await this.usuarioRepository.buscarPorId(usuarioId);
 
     if (!usuario) {
-      throw new Error('Usuario no encontrado');
+      throw new NotFoundError('Usuario no encontrado');
     }
 
     return usuario;

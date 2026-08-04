@@ -1,3 +1,4 @@
+import { NotFoundError } from '../../shared/domain/errors';
 import { CajaRepository } from '../domain/caja.repository';
 import { Caja } from '../domain/caja.entity';
 
@@ -8,7 +9,7 @@ export class ObtenerCajaActualUseCase {
     const caja = await this.cajaRepository.buscarAbierta();
 
     if (!caja) {
-      throw new Error('No hay ninguna caja abierta actualmente');
+      throw new NotFoundError('No hay ninguna caja abierta actualmente');
     }
 
     return caja;

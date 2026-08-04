@@ -7,6 +7,7 @@ import {
   Prisma,
   Venta as VentaPrisma,
 } from '@prisma/client';
+import { ConflictError, NotFoundError } from '../../shared/domain/errors';
 import { PrismaService } from '../../shared/infraestructure/prisma/prisma.service';
 import { ArqueoCaja } from '../domain/arqueo-caja.entity';
 import { Caja } from '../domain/caja.entity';
@@ -34,7 +35,7 @@ export class CajaTransaccionPrisma implements CajaTransaccionPort {
     return this.prisma.$transaction(async (tx) => {
       const existente = await tx.caja.findFirst({ where: { estado: 'ABIERTA' } });
       if (existente) {
-        throw new Error(
+        throw new ConflictError(
           'Ya existe una caja abierta. Debe realizar el arqueo antes de abrir una nueva.',
         );
       }
@@ -55,7 +56,7 @@ export class CajaTransaccionPrisma implements CajaTransaccionPort {
     return this.prisma.$transaction(async (tx) => {
       const cajaAbierta = await tx.caja.findFirst({ where: { estado: 'ABIERTA' } });
       if (!cajaAbierta) {
-        throw new Error('No hay caja abierta, debe abrir caja antes de vender');
+        throw new ConflictError('No hay caja abierta, debe abrir caja antes de vender');
       }
 
       const lineasConProducto: Array<{
@@ -65,7 +66,7 @@ export class CajaTransaccionPrisma implements CajaTransaccionPort {
       for (const linea of datos.lineas) {
         const producto = await tx.producto.findUnique({ where: { id: linea.productoId } });
         if (!producto) {
-          throw new Error(`Producto no encontrado: ${linea.productoId}`);
+          throw new NotFoundError(`Producto no encontrado: ${linea.productoId}`);
         }
         lineasConProducto.push({ linea, producto });
       }
@@ -76,7 +77,7 @@ export class CajaTransaccionPrisma implements CajaTransaccionPort {
           data: { stockActual: { decrement: linea.cantidad } },
         });
         if (resultado.count === 0) {
-          throw new Error(`Stock insuficiente para el producto "${producto.nombre}"`);
+          throw new ConflictError(`Stock insuficiente para el producto "${producto.nombre}"`);
         }
       }
 
@@ -120,10 +121,10 @@ export class CajaTransaccionPrisma implements CajaTransaccionPort {
     return this.prisma.$transaction(async (tx) => {
       const detalle = await tx.detalleVenta.findUnique({ where: { id: datos.itemId } });
       if (!detalle || detalle.ventaId !== datos.ventaId) {
-        throw new Error('Ítem de venta no encontrado');
+        throw new NotFoundError('Ítem de venta no encontrado');
       }
       if (detalle.estado === 'ANULADO') {
-        throw new Error('El ítem ya se encuentra anulado');
+        throw new ConflictError('El ítem ya se encuentra anulado');
       }
 
       const detalleActualizado = await tx.detalleVenta.update({
@@ -149,10 +150,10 @@ export class CajaTransaccionPrisma implements CajaTransaccionPort {
       async (tx) => {
         const caja = await tx.caja.findUnique({ where: { id: datos.cajaId } });
         if (!caja) {
-          throw new Error('Caja no encontrada');
+          throw new NotFoundError('Caja no encontrada');
         }
         if (caja.estado !== 'ABIERTA') {
-          throw new Error('La caja ya se encuentra cerrada');
+          throw new ConflictError('La caja ya se encuentra cerrada');
         }
 
         const ahora = new Date();

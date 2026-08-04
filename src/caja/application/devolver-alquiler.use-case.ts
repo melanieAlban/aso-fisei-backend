@@ -1,3 +1,4 @@
+import { ConflictError, NotFoundError } from '../../shared/domain/errors';
 import { DetalleVenta } from '../domain/detalle-venta.entity';
 import { VentaRepository } from '../domain/venta.repository';
 
@@ -8,13 +9,13 @@ export class DevolverAlquilerUseCase {
     const detalle = await this.ventaRepository.buscarDetallePorId(itemId);
 
     if (!detalle) {
-      throw new Error('Ítem no encontrado');
+      throw new NotFoundError('Ítem no encontrado');
     }
     if (!detalle.esAlquiler) {
-      throw new Error('El ítem no corresponde a un alquiler');
+      throw new ConflictError('El ítem no corresponde a un alquiler');
     }
     if (detalle.estadoAlquiler === 'DEVUELTO') {
-      throw new Error('El alquiler ya fue devuelto');
+      throw new ConflictError('El alquiler ya fue devuelto');
     }
 
     return this.ventaRepository.marcarAlquilerDevuelto(itemId);
