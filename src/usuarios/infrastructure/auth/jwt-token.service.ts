@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
+import { UnauthorizedError } from '../../../shared/domain/errors';
 import { TokenPayload, TokenService } from '../../application/ports/token.service';
 
 @Injectable()
@@ -30,7 +31,7 @@ export class JwtTokenService implements TokenService {
         secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
       });
     } catch {
-      throw new Error('Refresh token inválido o expirado');
+      throw new UnauthorizedError('Refresh token inválido o expirado');
     }
   }
 }

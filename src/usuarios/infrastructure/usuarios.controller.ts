@@ -87,6 +87,8 @@ export class UsuariosController {
   }
 
   @Patch(':id/password')
+  @UseGuards(PermisosGuard)
+  @RequierePermiso('usuarios.editar')
   async cambiarPassword(@Param('id') id: string, @Body() dto: CambiarPasswordDto) {
     const usuario = await this.cambiarPasswordUseCase.ejecutar({
       usuarioId: id,
@@ -118,6 +120,8 @@ export class UsuariosController {
   }
 
   @Delete(':id/permissions/:permissionId')
+  @UseGuards(PermisosGuard)
+  @RequierePermiso('usuarios.otorgar_permiso')
   revocarPermiso(@Param('id') id: string, @Param('permissionId') permissionId: string) {
     return this.revocarPermisoIndividualUseCase.ejecutar({
       usuarioId: id,

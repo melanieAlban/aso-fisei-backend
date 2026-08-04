@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, MovimientoInventario as MovimientoPrisma, Producto as ProductoPrisma } from '@prisma/client';
+import { ConflictError, NotFoundError } from '../../shared/domain/errors';
 import { PrismaService } from '../../shared/infraestructure/prisma/prisma.service';
 import { MovimientoInventario } from '../domain/movimiento-inventario.entity';
 import { Producto } from '../domain/producto.entity';
@@ -21,7 +22,7 @@ export class InventarioTransaccionPrisma implements InventarioTransaccionPort {
     return this.prisma.$transaction(async (tx) => {
       const producto = await tx.producto.findUnique({ where: { id: datos.productoId } });
       if (!producto) {
-        throw new Error('Producto no encontrado');
+        throw new NotFoundError('Producto no encontrado');
       }
 
       const montoTotal = Math.round(datos.costoUnitario * datos.cantidad * 100) / 100;
@@ -147,7 +148,7 @@ export class InventarioTransaccionPrisma implements InventarioTransaccionPort {
       } else {
         const producto = await tx.producto.findUnique({ where: { id: datos.productoId } });
         if (!producto) {
-          throw new Error('Producto no encontrado');
+          throw new NotFoundError('Producto no encontrado');
         }
         await tx.producto.update({
           where: { id: datos.productoId },
@@ -195,7 +196,7 @@ export class InventarioTransaccionPrisma implements InventarioTransaccionPort {
   ): Promise<void> {
     const producto = await tx.producto.findUnique({ where: { id: productoId } });
     if (!producto) {
-      throw new Error('Producto no encontrado');
+      throw new NotFoundError('Producto no encontrado');
     }
 
     const resultado = await tx.producto.updateMany({
@@ -204,7 +205,7 @@ export class InventarioTransaccionPrisma implements InventarioTransaccionPort {
     });
 
     if (resultado.count === 0) {
-      throw new Error(`Stock insuficiente para registrar ${etiqueta}`);
+      throw new ConflictError(`Stock insuficiente para registrar ${etiqueta}`);
     }
   }
 

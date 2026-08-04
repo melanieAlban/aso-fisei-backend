@@ -1,3 +1,4 @@
+import { NotFoundError } from '../../shared/domain/errors';
 import { Producto } from '../domain/producto.entity';
 import { ProductoRepository } from '../domain/producto.repository';
 
@@ -8,7 +9,7 @@ export class ObtenerProductoUseCase {
     const producto = await this.productoRepository.buscarPorId(id);
 
     if (!producto) {
-      throw new Error('Producto no encontrado');
+      throw new NotFoundError('Producto no encontrado');
     }
 
     return producto;

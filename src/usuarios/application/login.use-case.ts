@@ -1,4 +1,5 @@
 import * as bcrypt from 'bcrypt';
+import { UnauthorizedError } from '../../shared/domain/errors';
 import { Usuario } from '../domain/usuario.entity';
 import { UsuarioRepository } from '../domain/usuario.repository';
 import { TokenService } from './ports/token.service';
@@ -17,13 +18,13 @@ export class LoginUseCase {
     const usuario = await this.usuarioRepository.buscarPorUsuario(datos.usuario);
 
     if (!usuario || !usuario.estaActivo()) {
-      throw new Error('Usuario o contraseña incorrectos');
+      throw new UnauthorizedError('Usuario o contraseña incorrectos');
     }
 
     const passwordValido = await bcrypt.compare(datos.password, usuario.passwordHash);
 
     if (!passwordValido) {
-      throw new Error('Usuario o contraseña incorrectos');
+      throw new UnauthorizedError('Usuario o contraseña incorrectos');
     }
 
     const usuarioActualizado = new Usuario(

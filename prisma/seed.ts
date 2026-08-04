@@ -22,9 +22,6 @@ const PERMISOS: Array<{ codigo: string; descripcion: string }> = [
   { codigo: 'inventario.registrar_ajuste', descripcion: 'Registrar ajustes de inventario' },
   { codigo: 'inventario.editar_configuracion', descripcion: 'Editar configuración del sistema de inventario' },
 
-  { codigo: 'compras.crear', descripcion: 'Registrar compras' },
-  { codigo: 'compras.listar', descripcion: 'Listar compras' },
-
   { codigo: 'ventas.crear', descripcion: 'Registrar ventas' },
   { codigo: 'ventas.listar', descripcion: 'Listar ventas' },
   { codigo: 'ventas.anular', descripcion: 'Anular ventas' },
@@ -32,8 +29,6 @@ const PERMISOS: Array<{ codigo: string; descripcion: string }> = [
 
   { codigo: 'caja.abrir', descripcion: 'Abrir una sesión de caja' },
   { codigo: 'caja.arqueo', descripcion: 'Realizar arqueo de caja' },
-  { codigo: 'caja.retiro_fondo', descripcion: 'Retirar dinero del Fondo General' },
-  { codigo: 'caja.listar', descripcion: 'Listar movimientos de caja' },
 
   { codigo: 'fondo_general.ajustar', descripcion: 'Ajustar el saldo inicial del Fondo General' },
   { codigo: 'fondo_general.ver', descripcion: 'Ver saldo y movimientos del Fondo General' },
@@ -60,14 +55,26 @@ const PERMISOS_VENDEDOR = [
   'ventas.vender_entradas',
   'inventario.listar',
 ];
-const PERMISOS_COMPRAS = [
+const PERMISOS_COMPRAS = ['inventario.listar', 'inventario.registrar_compra'];
+
+const CODIGOS_PERMISOS_OBSOLETOS = [
   'compras.crear',
   'compras.listar',
-  'inventario.listar',
-  'inventario.registrar_compra',
+  'caja.retiro_fondo',
+  'caja.listar',
 ];
 
 async function main() {
+  console.log('Eliminando permisos obsoletos (superados por códigos más específicos)...');
+  const permisosObsoletos = await prisma.permiso.findMany({
+    where: { codigo: { in: CODIGOS_PERMISOS_OBSOLETOS } },
+  });
+  const idsObsoletos = permisosObsoletos.map((permiso) => permiso.id);
+  if (idsObsoletos.length > 0) {
+    await prisma.rolPermiso.deleteMany({ where: { permisoId: { in: idsObsoletos } } });
+    await prisma.permiso.deleteMany({ where: { id: { in: idsObsoletos } } });
+  }
+
   console.log('Sembrando permisos...');
   for (const permiso of PERMISOS) {
     await prisma.permiso.upsert({

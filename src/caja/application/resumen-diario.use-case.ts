@@ -1,3 +1,4 @@
+import { NotFoundError } from '../../shared/domain/errors';
 import { CajaRepository } from '../domain/caja.repository';
 import { ResumenDiario, VentaRepository } from '../domain/venta.repository';
 
@@ -11,7 +12,7 @@ export class ResumenDiarioUseCase {
     const caja = await this.cajaRepository.buscarPorId(cajaId);
 
     if (!caja) {
-      throw new Error('Caja no encontrada');
+      throw new NotFoundError('Caja no encontrada');
     }
 
     return this.ventaRepository.resumenDiarioPorCaja(cajaId);
