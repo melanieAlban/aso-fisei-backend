@@ -1,6 +1,12 @@
 import { MetodoPago } from './venta.entity';
 
-export type TipoMovimientoFondo = 'RETIRO_CAJA' | 'GASTO' | 'AJUSTE_INICIAL' | 'UTILIDAD_EVENTO';
+export type TipoMovimientoFondo =
+  | 'RETIRO_CAJA'
+  | 'GASTO'
+  | 'AJUSTE_INICIAL'
+  | 'UTILIDAD_EVENTO'
+  | 'ABONO_DEUDA_RECIBIDO'
+  | 'ABONO_DEUDA_PAGADO';
 
 export class MovimientoFondoGeneral {
   constructor(

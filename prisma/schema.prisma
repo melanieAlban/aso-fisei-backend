@@ -141,11 +141,15 @@ model Gasto {
   monto                   Decimal     @db.Decimal(10, 2)
   categoria               String
   fuentePago              FuentePago
+  moneda                  MetodoPago?
   generadoAutomaticamente Boolean     @default(false)
   estado                  EstadoGasto @default(ACTIVO)
+  motivoAnulacion         String?
+  usuarioAnulacionId      String?
   fecha                   DateTime    @default(now())
 
   movimientoInventario MovimientoInventario?
+  deudas               Deuda[]
 
   @@map("gastos")
 }
@@ -278,6 +282,8 @@ enum TipoMovimientoFondo {
   GASTO
   AJUSTE_INICIAL
   UTILIDAD_EVENTO
+  ABONO_DEUDA_RECIBIDO
+  ABONO_DEUDA_PAGADO
 }
 
 model SaldoGlobal {
@@ -286,4 +292,45 @@ model SaldoGlobal {
   saldoTransferencia Decimal @db.Decimal(10, 2) @default(0)
 
   @@map("saldo_global")
+}
+
+model Deuda {
+  id            String      @id @default(uuid())
+  usuarioId     String
+  gastoId       String?
+  tipo          TipoDeuda
+  contraparte   String
+  montoTotal    Decimal     @db.Decimal(10, 2)
+  montoAbonado  Decimal     @db.Decimal(10, 2) @default(0)
+  estado        EstadoDeuda @default(PENDIENTE)
+  fechaRegistro DateTime    @default(now())
+
+  gasto  Gasto?       @relation(fields: [gastoId], references: [id])
+  abonos AbonoDeuda[]
+
+  @@map("deudas")
+}
+
+enum TipoDeuda {
+  POR_COBRAR
+  POR_PAGAR
+}
+
+enum EstadoDeuda {
+  PENDIENTE
+  PARCIAL
+  CANCELADA
+}
+
+model AbonoDeuda {
+  id         String     @id @default(uuid())
+  deudaId    String
+  usuarioId  String
+  monto      Decimal    @db.Decimal(10, 2)
+  metodoPago MetodoPago
+  fecha      DateTime   @default(now())
+
+  deuda Deuda @relation(fields: [deudaId], references: [id])
+
+  @@map("abonos_deuda")
 }

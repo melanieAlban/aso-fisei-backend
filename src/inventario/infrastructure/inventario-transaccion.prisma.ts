@@ -25,6 +25,21 @@ export class InventarioTransaccionPrisma implements InventarioTransaccionPort {
         throw new NotFoundError('Producto no encontrado');
       }
 
+      if (datos.fuentePago === 'EFECTIVO_CAJA') {
+        const cajaAbierta = await tx.caja.findFirst({ where: { estado: 'ABIERTA' } });
+        if (!cajaAbierta) {
+          throw new ConflictError(
+            'No hay caja abierta, debe abrir caja antes de registrar una compra en efectivo de caja',
+          );
+        }
+      }
+
+      if (datos.fuentePago === 'FONDO_GENERAL' && !datos.moneda) {
+        throw new Error(
+          'Debe indicar la moneda (EFECTIVO o TRANSFERENCIA) cuando la compra se paga desde el Fondo General',
+        );
+      }
+
       const montoTotal = Math.round(datos.costoUnitario * datos.cantidad * 100) / 100;
 
       const gasto = await tx.gasto.create({
@@ -34,21 +49,17 @@ export class InventarioTransaccionPrisma implements InventarioTransaccionPort {
           monto: montoTotal,
           categoria: 'Compra de productos',
           fuentePago: datos.fuentePago,
+          moneda: datos.fuentePago === 'FONDO_GENERAL' ? datos.moneda : null,
           generadoAutomaticamente: true,
         },
       });
 
       if (datos.fuentePago === 'FONDO_GENERAL') {
-        if (!datos.moneda) {
-          throw new Error(
-            'Debe indicar la moneda (EFECTIVO o TRANSFERENCIA) cuando la compra se paga desde el Fondo General',
-          );
-        }
-
+        const moneda = datos.moneda!;
         const saldoActualizado = await tx.saldoGlobal.update({
           where: { id: 1 },
           data:
-            datos.moneda === 'EFECTIVO'
+            moneda === 'EFECTIVO'
               ? { saldoEfectivo: { decrement: montoTotal } }
               : { saldoTransferencia: { decrement: montoTotal } },
         });
@@ -58,7 +69,7 @@ export class InventarioTransaccionPrisma implements InventarioTransaccionPort {
             usuarioId: datos.usuarioId,
             tipo: 'GASTO',
             monto: montoTotal,
-            metodoPago: datos.moneda,
+            metodoPago: moneda,
             saldoResultanteEfectivo: saldoActualizado.saldoEfectivo,
             saldoResultanteTransferencia: saldoActualizado.saldoTransferencia,
             referenciaId: gasto.id,

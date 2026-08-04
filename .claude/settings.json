@@ -29,7 +29,11 @@
       "Bash(taskkill //F //PID 34980)",
       "Bash(taskkill //F //PID 20340)",
       "Bash(taskkill //F //PID 7536)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/api/v1/auth/login -X POST -H \"Content-Type: application/json\" -d \"{}\")"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/api/v1/auth/login -X POST -H \"Content-Type: application/json\" -d \"{}\")",
+      "Bash(taskkill //F //PID 35312)",
+      "Bash(taskkill //F //PID 15492)",
+      "Bash(taskkill //F //PID 22224)",
+      "Bash(taskkill //F //PID 28748)"
     ]
   }
 }

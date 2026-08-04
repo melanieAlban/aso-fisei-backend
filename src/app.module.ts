@@ -8,6 +8,8 @@ import { AuditoriaInterceptor } from './shared/infraestructure/auditoria/auditor
 import { TransformInterceptor } from './shared/infraestructure/interceptors/transform.interceptor';
 import { PrismaModule } from './shared/infraestructure/prisma/prisma.module';
 import { CajaModule } from './caja/infrastructure/caja.module';
+import { DeudasModule } from './deudas/infrastructure/deudas.module';
+import { GastosModule } from './gastos/infrastructure/gastos.module';
 import { InventarioModule } from './inventario/infrastructure/inventario.module';
 import { UsuariosModule } from './usuarios/infrastructure/usuarios.module';
 
@@ -18,6 +20,8 @@ import { UsuariosModule } from './usuarios/infrastructure/usuarios.module';
     UsuariosModule,
     InventarioModule,
     CajaModule,
+    GastosModule,
+    DeudasModule,
   ],
   controllers: [AppController],
   providers: [
