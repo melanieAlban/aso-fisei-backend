@@ -16,4 +16,12 @@ export class UsuarioRolRepositoryPrisma implements UsuarioRolRepository {
   async asignar(usuarioId: string, rolId: string): Promise<void> {
     await this.prisma.usuarioRol.create({ data: { usuarioId, rolId } });
   }
+
+  async listarNombresRolesPorUsuario(usuarioId: string): Promise<string[]> {
+    const asignaciones = await this.prisma.usuarioRol.findMany({
+      where: { usuarioId },
+      include: { rol: true },
+    });
+    return asignaciones.map((asignacion) => asignacion.rol.nombre);
+  }
 }
