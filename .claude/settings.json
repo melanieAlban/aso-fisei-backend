@@ -18,7 +18,12 @@
       "Bash(taskkill //F //PID 23656)",
       "Bash(taskkill //F //PID 17792)",
       "Bash(node \"C:\\\\Users\\\\Melan\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Melan-OneDrive-Documents-SOFTWARE-aso-fisei-asociacion-backend\\\\386fefd9-8839-492e-85a6-a981cb2e7854\\\\scratchpad\\\\check-auditoria.js\")",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(taskkill //F //PID 23980)",
+      "Bash(taskkill //F //PID 14312)",
+      "Bash(taskkill //F //PID 23812)",
+      "Bash(taskkill //F //PID 18412)",
+      "Bash(taskkill //F //PID 26900)"
     ]
   }
 }

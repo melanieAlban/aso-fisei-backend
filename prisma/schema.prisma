@@ -96,3 +96,73 @@ model Auditoria {
 
   @@map("auditoria")
 }
+
+model Producto {
+  id            String   @id @default(uuid())
+  nombre        String
+  costoUnitario Decimal  @db.Decimal(10, 2) @default(0)
+  precioVenta   Decimal  @db.Decimal(10, 2)
+  stockActual   Int      @default(0)
+  activo        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  movimientos MovimientoInventario[]
+
+  @@map("productos")
+}
+
+model MovimientoInventario {
+  id         String                   @id @default(uuid())
+  productoId String
+  usuarioId  String
+  tipo       TipoMovimientoInventario
+  cantidad   Int
+  motivo     String?
+  gastoId    String?                  @unique
+  fecha      DateTime                 @default(now())
+
+  producto Producto @relation(fields: [productoId], references: [id])
+  gasto    Gasto?   @relation(fields: [gastoId], references: [id])
+
+  @@map("movimientos_inventario")
+}
+
+enum TipoMovimientoInventario {
+  COMPRA
+  VENTA
+  PERDIDA
+  AJUSTE
+}
+
+model Gasto {
+  id                      String      @id @default(uuid())
+  usuarioId               String
+  descripcion             String
+  monto                   Decimal     @db.Decimal(10, 2)
+  categoria               String
+  fuentePago              FuentePago
+  generadoAutomaticamente Boolean     @default(false)
+  estado                  EstadoGasto @default(ACTIVO)
+  fecha                   DateTime    @default(now())
+
+  movimientoInventario MovimientoInventario?
+
+  @@map("gastos")
+}
+
+enum FuentePago {
+  EFECTIVO_CAJA
+  FONDO_GENERAL
+}
+
+enum EstadoGasto {
+  ACTIVO
+  ANULADO
+}
+
+model ConfiguracionSistema {
+  clave String @id
+  valor String
+
+  @@map("configuracion_sistema")
+}

@@ -1,0 +1,206 @@
+import { Injectable } from '@nestjs/common';
+import { Prisma, MovimientoInventario as MovimientoPrisma, Producto as ProductoPrisma } from '@prisma/client';
+import { PrismaService } from '../../shared/infraestructure/prisma/prisma.service';
+import { MovimientoInventario } from '../domain/movimiento-inventario.entity';
+import { Producto } from '../domain/producto.entity';
+import {
+  InventarioTransaccionPort,
+  RegistrarAjusteDatos,
+  RegistrarCompraDatos,
+  RegistrarPerdidaDatos,
+  ResultadoMovimiento,
+} from '../application/ports/inventario-transaccion.port';
+
+type ClientePrisma = Prisma.TransactionClient;
+
+@Injectable()
+export class InventarioTransaccionPrisma implements InventarioTransaccionPort {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async registrarCompra(datos: RegistrarCompraDatos): Promise<ResultadoMovimiento> {
+    return this.prisma.$transaction(async (tx) => {
+      const producto = await tx.producto.findUnique({ where: { id: datos.productoId } });
+      if (!producto) {
+        throw new Error('Producto no encontrado');
+      }
+
+      const montoTotal = Math.round(datos.costoUnitario * datos.cantidad * 100) / 100;
+
+      const gasto = await tx.gasto.create({
+        data: {
+          usuarioId: datos.usuarioId,
+          descripcion: `Compra de ${datos.cantidad} unidad(es) de ${producto.nombre}`,
+          monto: montoTotal,
+          categoria: 'Compra de productos',
+          fuentePago: datos.fuentePago,
+          generadoAutomaticamente: true,
+        },
+      });
+
+      const movimiento = new MovimientoInventario(
+        crypto.randomUUID(),
+        datos.productoId,
+        datos.usuarioId,
+        'COMPRA',
+        datos.cantidad,
+        null,
+        gasto.id,
+        new Date(),
+      );
+
+      const movimientoCreado = await tx.movimientoInventario.create({
+        data: {
+          id: movimiento.id,
+          productoId: movimiento.productoId,
+          usuarioId: movimiento.usuarioId,
+          tipo: movimiento.tipo,
+          cantidad: movimiento.cantidad,
+          gastoId: movimiento.gastoId,
+          fecha: movimiento.fecha,
+        },
+      });
+
+      const productoActualizado = await tx.producto.update({
+        where: { id: datos.productoId },
+        data: {
+          stockActual: { increment: datos.cantidad },
+          costoUnitario: datos.costoUnitario,
+        },
+      });
+
+      return {
+        movimiento: this.movimientoADominio(movimientoCreado),
+        producto: this.productoADominio(productoActualizado),
+      };
+    });
+  }
+
+  async registrarPerdida(datos: RegistrarPerdidaDatos): Promise<ResultadoMovimiento> {
+    return this.prisma.$transaction(async (tx) => {
+      await this.decrementarStockOFallar(tx, datos.productoId, datos.cantidad, 'la pérdida');
+
+      const movimiento = new MovimientoInventario(
+        crypto.randomUUID(),
+        datos.productoId,
+        datos.usuarioId,
+        'PERDIDA',
+        datos.cantidad,
+        datos.motivo,
+        null,
+        new Date(),
+      );
+
+      const movimientoCreado = await tx.movimientoInventario.create({
+        data: {
+          id: movimiento.id,
+          productoId: movimiento.productoId,
+          usuarioId: movimiento.usuarioId,
+          tipo: movimiento.tipo,
+          cantidad: movimiento.cantidad,
+          motivo: movimiento.motivo,
+          fecha: movimiento.fecha,
+        },
+      });
+
+      const producto = await tx.producto.findUniqueOrThrow({ where: { id: datos.productoId } });
+
+      return {
+        movimiento: this.movimientoADominio(movimientoCreado),
+        producto: this.productoADominio(producto),
+      };
+    });
+  }
+
+  async registrarAjuste(datos: RegistrarAjusteDatos): Promise<ResultadoMovimiento> {
+    return this.prisma.$transaction(async (tx) => {
+      if (datos.direccion === 'DECREMENTO') {
+        await this.decrementarStockOFallar(tx, datos.productoId, datos.cantidad, 'el ajuste');
+      } else {
+        const producto = await tx.producto.findUnique({ where: { id: datos.productoId } });
+        if (!producto) {
+          throw new Error('Producto no encontrado');
+        }
+        await tx.producto.update({
+          where: { id: datos.productoId },
+          data: { stockActual: { increment: datos.cantidad } },
+        });
+      }
+
+      const movimiento = new MovimientoInventario(
+        crypto.randomUUID(),
+        datos.productoId,
+        datos.usuarioId,
+        'AJUSTE',
+        datos.cantidad,
+        datos.motivo ?? null,
+        null,
+        new Date(),
+      );
+
+      const movimientoCreado = await tx.movimientoInventario.create({
+        data: {
+          id: movimiento.id,
+          productoId: movimiento.productoId,
+          usuarioId: movimiento.usuarioId,
+          tipo: movimiento.tipo,
+          cantidad: movimiento.cantidad,
+          motivo: movimiento.motivo,
+          fecha: movimiento.fecha,
+        },
+      });
+
+      const producto = await tx.producto.findUniqueOrThrow({ where: { id: datos.productoId } });
+
+      return {
+        movimiento: this.movimientoADominio(movimientoCreado),
+        producto: this.productoADominio(producto),
+      };
+    });
+  }
+
+  private async decrementarStockOFallar(
+    tx: ClientePrisma,
+    productoId: string,
+    cantidad: number,
+    etiqueta: string,
+  ): Promise<void> {
+    const producto = await tx.producto.findUnique({ where: { id: productoId } });
+    if (!producto) {
+      throw new Error('Producto no encontrado');
+    }
+
+    const resultado = await tx.producto.updateMany({
+      where: { id: productoId, stockActual: { gte: cantidad } },
+      data: { stockActual: { decrement: cantidad } },
+    });
+
+    if (resultado.count === 0) {
+      throw new Error(`Stock insuficiente para registrar ${etiqueta}`);
+    }
+  }
+
+  private productoADominio(registro: ProductoPrisma): Producto {
+    return new Producto(
+      registro.id,
+      registro.nombre,
+      registro.costoUnitario.toNumber(),
+      registro.precioVenta.toNumber(),
+      registro.stockActual,
+      registro.activo,
+      registro.createdAt,
+    );
+  }
+
+  private movimientoADominio(registro: MovimientoPrisma): MovimientoInventario {
+    return new MovimientoInventario(
+      registro.id,
+      registro.productoId,
+      registro.usuarioId,
+      registro.tipo,
+      registro.cantidad,
+      registro.motivo,
+      registro.gastoId,
+      registro.fecha,
+    );
+  }
+}

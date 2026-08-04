@@ -15,6 +15,12 @@ const PERMISOS: Array<{ codigo: string; descripcion: string }> = [
   { codigo: 'inventario.listar', descripcion: 'Listar inventario' },
   { codigo: 'inventario.editar', descripcion: 'Editar artículos de inventario' },
   { codigo: 'inventario.anular', descripcion: 'Anular movimientos de inventario' },
+  { codigo: 'inventario.crear_producto', descripcion: 'Crear productos' },
+  { codigo: 'inventario.editar_producto', descripcion: 'Editar productos' },
+  { codigo: 'inventario.registrar_compra', descripcion: 'Registrar compras de inventario' },
+  { codigo: 'inventario.registrar_perdida', descripcion: 'Registrar pérdidas de inventario' },
+  { codigo: 'inventario.registrar_ajuste', descripcion: 'Registrar ajustes de inventario' },
+  { codigo: 'inventario.editar_configuracion', descripcion: 'Editar configuración del sistema de inventario' },
 
   { codigo: 'compras.crear', descripcion: 'Registrar compras' },
   { codigo: 'compras.listar', descripcion: 'Listar compras' },
@@ -44,8 +50,18 @@ const PERMISOS: Array<{ codigo: string; descripcion: string }> = [
   { codigo: 'auditoria.listar', descripcion: 'Listar registros de auditoría' },
 ];
 
-const PERMISOS_VENDEDOR = ['ventas.crear', 'ventas.listar', 'ventas.vender_entradas'];
-const PERMISOS_COMPRAS = ['compras.crear', 'compras.listar'];
+const PERMISOS_VENDEDOR = [
+  'ventas.crear',
+  'ventas.listar',
+  'ventas.vender_entradas',
+  'inventario.listar',
+];
+const PERMISOS_COMPRAS = [
+  'compras.crear',
+  'compras.listar',
+  'inventario.listar',
+  'inventario.registrar_compra',
+];
 
 async function main() {
   console.log('Sembrando permisos...');
@@ -122,6 +138,32 @@ async function main() {
     update: {},
     create: { usuarioId: usuarioAdmin.id, rolId: admin.id },
   });
+
+  console.log('Sembrando configuración del sistema...');
+  await prisma.configuracionSistema.upsert({
+    where: { clave: 'stock_minimo_global' },
+    update: {},
+    create: { clave: 'stock_minimo_global', valor: '10' },
+  });
+
+  console.log('Sembrando productos de ejemplo...');
+  const PRODUCTOS = [
+    { nombre: 'Papas fritas', precioVenta: 1.0 },
+    { nombre: 'Chicles', precioVenta: 0.25 },
+    { nombre: 'Agua embotellada', precioVenta: 0.75 },
+    { nombre: 'Gaseosa', precioVenta: 1.5 },
+    { nombre: 'Snacks salados', precioVenta: 1.25 },
+    { nombre: 'Dulces surtidos', precioVenta: 0.5 },
+  ];
+
+  for (const producto of PRODUCTOS) {
+    const existente = await prisma.producto.findFirst({ where: { nombre: producto.nombre } });
+    if (!existente) {
+      await prisma.producto.create({
+        data: { nombre: producto.nombre, precioVenta: producto.precioVenta, stockActual: 0 },
+      });
+    }
+  }
 
   console.log('Seed completado.');
   console.log(`Usuario admin -> usuario: "admin" | password: "${passwordAdmin}"`);
