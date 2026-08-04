@@ -39,7 +39,7 @@ const PERMISOS: Array<{ codigo: string; descripcion: string }> = [
 
   { codigo: 'deudas.crear', descripcion: 'Registrar deudas' },
   { codigo: 'deudas.listar', descripcion: 'Listar deudas' },
-  { codigo: 'deudas.editar', descripcion: 'Editar deudas' },
+  { codigo: 'deudas.abonar', descripcion: 'Registrar abonos a deudas' },
 
   { codigo: 'eventos.crear', descripcion: 'Crear eventos' },
   { codigo: 'eventos.listar', descripcion: 'Listar eventos' },
@@ -62,6 +62,7 @@ const CODIGOS_PERMISOS_OBSOLETOS = [
   'compras.listar',
   'caja.retiro_fondo',
   'caja.listar',
+  'deudas.editar',
 ];
 
 async function main() {
