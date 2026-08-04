@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Inject,
   Param,
   Patch,
   Post,
@@ -14,6 +15,7 @@ import {
 import { Request } from 'express';
 import { AsignarRolUseCase } from '../application/asignar-rol.use-case';
 import { Usuario } from '../domain/usuario.entity';
+import { UsuarioRolRepository } from '../domain/usuario-rol.repository';
 import { CambiarPasswordUseCase } from '../application/cambiar-password.use-case';
 import { CrearUsuarioUseCase } from '../application/crear-usuario.use-case';
 import { DesactivarUsuarioUseCase } from '../application/desactivar-usuario.use-case';
@@ -49,6 +51,7 @@ export class UsuariosController {
     private readonly asignarRolUseCase: AsignarRolUseCase,
     private readonly otorgarPermisoIndividualUseCase: OtorgarPermisoIndividualUseCase,
     private readonly revocarPermisoIndividualUseCase: RevocarPermisoIndividualUseCase,
+    @Inject('UsuarioRolRepository') private readonly usuarioRolRepository: UsuarioRolRepository,
   ) {}
 
   @Get()
@@ -75,7 +78,8 @@ export class UsuariosController {
   @Get(':id')
   async obtener(@Param('id') id: string) {
     const usuario = await this.obtenerUsuarioUseCase.ejecutar(id);
-    return this.aRespuesta(usuario);
+    const roles = await this.usuarioRolRepository.listarNombresRolesPorUsuario(id);
+    return this.aRespuesta(usuario, roles);
   }
 
   @Patch(':id/deactivate')
@@ -129,13 +133,14 @@ export class UsuariosController {
     });
   }
 
-  private aRespuesta(usuario: Usuario) {
+  private aRespuesta(usuario: Usuario, roles?: string[]) {
     return {
       id: usuario.id,
       nombre: usuario.nombre,
       usuario: usuario.usuario,
       activo: usuario.activo,
       fechaUltimoAcceso: usuario.fechaUltimoAcceso,
+      ...(roles ? { roles } : {}),
     };
   }
 }

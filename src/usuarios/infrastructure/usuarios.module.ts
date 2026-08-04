@@ -55,9 +55,12 @@ import { UsuariosController } from './usuarios.controller';
     },
     {
       provide: LoginUseCase,
-      useFactory: (repo: UsuarioRepository, tokenService: TokenService) =>
-        new LoginUseCase(repo, tokenService),
-      inject: ['UsuarioRepository', 'TokenService'],
+      useFactory: (
+        repo: UsuarioRepository,
+        tokenService: TokenService,
+        usuarioRolRepository: UsuarioRolRepository,
+      ) => new LoginUseCase(repo, tokenService, usuarioRolRepository),
+      inject: ['UsuarioRepository', 'TokenService', 'UsuarioRolRepository'],
     },
     {
       provide: RefrescarTokenUseCase,
