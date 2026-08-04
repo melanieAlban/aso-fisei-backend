@@ -3,6 +3,7 @@ import { Producto } from '../../domain/producto.entity';
 
 export type FuentePagoValor = 'EFECTIVO_CAJA' | 'FONDO_GENERAL';
 export type DireccionAjuste = 'INCREMENTO' | 'DECREMENTO';
+export type MonedaFondo = 'EFECTIVO' | 'TRANSFERENCIA';
 
 export interface RegistrarCompraDatos {
   productoId: string;
@@ -10,6 +11,12 @@ export interface RegistrarCompraDatos {
   cantidad: number;
   costoUnitario: number;
   fuentePago: FuentePagoValor;
+  /**
+   * Solo aplica cuando fuentePago es FONDO_GENERAL: indica si el gasto se descuenta
+   * del saldo en efectivo o en transferencia del Fondo General. Se ignora si
+   * fuentePago es EFECTIVO_CAJA (ese dinero siempre es efectivo físico de caja).
+   */
+  moneda?: MonedaFondo;
 }
 
 export interface RegistrarPerdidaDatos {

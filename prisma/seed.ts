@@ -30,9 +30,13 @@ const PERMISOS: Array<{ codigo: string; descripcion: string }> = [
   { codigo: 'ventas.anular', descripcion: 'Anular ventas' },
   { codigo: 'ventas.vender_entradas', descripcion: 'Vender entradas a eventos' },
 
+  { codigo: 'caja.abrir', descripcion: 'Abrir una sesión de caja' },
   { codigo: 'caja.arqueo', descripcion: 'Realizar arqueo de caja' },
   { codigo: 'caja.retiro_fondo', descripcion: 'Retirar dinero del Fondo General' },
   { codigo: 'caja.listar', descripcion: 'Listar movimientos de caja' },
+
+  { codigo: 'fondo_general.ajustar', descripcion: 'Ajustar el saldo inicial del Fondo General' },
+  { codigo: 'fondo_general.ver', descripcion: 'Ver saldo y movimientos del Fondo General' },
 
   { codigo: 'gastos.crear', descripcion: 'Registrar gastos' },
   { codigo: 'gastos.listar', descripcion: 'Listar gastos' },
@@ -144,6 +148,13 @@ async function main() {
     where: { clave: 'stock_minimo_global' },
     update: {},
     create: { clave: 'stock_minimo_global', valor: '10' },
+  });
+
+  console.log('Sembrando saldo global inicial...');
+  await prisma.saldoGlobal.upsert({
+    where: { id: 1 },
+    update: {},
+    create: { id: 1, saldoEfectivo: 0, saldoTransferencia: 0 },
   });
 
   console.log('Sembrando productos de ejemplo...');

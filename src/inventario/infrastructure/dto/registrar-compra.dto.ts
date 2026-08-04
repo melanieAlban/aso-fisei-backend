@@ -1,5 +1,5 @@
-import { FuentePago } from '@prisma/client';
-import { IsEnum, IsInt, IsNumber, IsPositive, IsUUID, Min } from 'class-validator';
+import { FuentePago, MetodoPago } from '@prisma/client';
+import { IsEnum, IsInt, IsNumber, IsPositive, IsUUID, Min, ValidateIf } from 'class-validator';
 
 export class RegistrarCompraDto {
   @IsUUID()
@@ -15,4 +15,8 @@ export class RegistrarCompraDto {
 
   @IsEnum(FuentePago)
   fuentePago: FuentePago;
+
+  @ValidateIf((dto: RegistrarCompraDto) => dto.fuentePago === 'FONDO_GENERAL')
+  @IsEnum(MetodoPago)
+  moneda?: MetodoPago;
 }
