@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import { ActivarUsuarioUseCase } from '../application/activar-usuario.use-case';
 import { AsignarRolUseCase } from '../application/asignar-rol.use-case';
 import { CambiarPasswordUseCase } from '../application/cambiar-password.use-case';
 import { CrearUsuarioUseCase } from '../application/crear-usuario.use-case';
 import { DesactivarUsuarioUseCase } from '../application/desactivar-usuario.use-case';
+import { EditarUsuarioUseCase } from '../application/editar-usuario.use-case';
 import { ListarPermisosUseCase } from '../application/listar-permisos.use-case';
 import { ListarRolesUseCase } from '../application/listar-roles.use-case';
 import { ListarUsuariosUseCase } from '../application/listar-usuarios.use-case';
@@ -12,6 +14,7 @@ import { LoginUseCase } from '../application/login.use-case';
 import { ObtenerUsuarioUseCase } from '../application/obtener-usuario.use-case';
 import { OtorgarPermisoIndividualUseCase } from '../application/otorgar-permiso-individual.use-case';
 import { TokenService } from '../application/ports/token.service';
+import { QuitarRolUseCase } from '../application/quitar-rol.use-case';
 import { RefrescarTokenUseCase } from '../application/refrescar-token.use-case';
 import { RevocarPermisoIndividualUseCase } from '../application/revocar-permiso-individual.use-case';
 import { PermisoRepository } from '../domain/permiso.repository';
@@ -88,6 +91,21 @@ import { UsuariosController } from './usuarios.controller';
       provide: DesactivarUsuarioUseCase,
       useFactory: (repo: UsuarioRepository) => new DesactivarUsuarioUseCase(repo),
       inject: ['UsuarioRepository'],
+    },
+    {
+      provide: ActivarUsuarioUseCase,
+      useFactory: (repo: UsuarioRepository) => new ActivarUsuarioUseCase(repo),
+      inject: ['UsuarioRepository'],
+    },
+    {
+      provide: EditarUsuarioUseCase,
+      useFactory: (repo: UsuarioRepository) => new EditarUsuarioUseCase(repo),
+      inject: ['UsuarioRepository'],
+    },
+    {
+      provide: QuitarRolUseCase,
+      useFactory: (repo: UsuarioRolRepository) => new QuitarRolUseCase(repo),
+      inject: ['UsuarioRolRepository'],
     },
     {
       provide: CambiarPasswordUseCase,

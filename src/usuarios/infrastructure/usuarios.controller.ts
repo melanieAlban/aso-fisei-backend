@@ -13,15 +13,18 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Request } from 'express';
+import { ActivarUsuarioUseCase } from '../application/activar-usuario.use-case';
 import { AsignarRolUseCase } from '../application/asignar-rol.use-case';
 import { Usuario } from '../domain/usuario.entity';
 import { UsuarioRolRepository } from '../domain/usuario-rol.repository';
 import { CambiarPasswordUseCase } from '../application/cambiar-password.use-case';
 import { CrearUsuarioUseCase } from '../application/crear-usuario.use-case';
 import { DesactivarUsuarioUseCase } from '../application/desactivar-usuario.use-case';
+import { EditarUsuarioUseCase } from '../application/editar-usuario.use-case';
 import { ListarUsuariosUseCase } from '../application/listar-usuarios.use-case';
 import { ObtenerUsuarioUseCase } from '../application/obtener-usuario.use-case';
 import { OtorgarPermisoIndividualUseCase } from '../application/otorgar-permiso-individual.use-case';
+import { QuitarRolUseCase } from '../application/quitar-rol.use-case';
 import { RevocarPermisoIndividualUseCase } from '../application/revocar-permiso-individual.use-case';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { UsuarioAutenticado } from './auth/jwt-payload.interface';
@@ -30,6 +33,7 @@ import { RequierePermiso } from './auth/requiere-permiso.decorator';
 import { AsignarRolDto } from './dto/asignar-rol.dto';
 import { CambiarPasswordDto } from './dto/cambiar-password.dto';
 import { CrearUsuarioDto } from './dto/crear-usuario.dto';
+import { EditarUsuarioDto } from './dto/editar-usuario.dto';
 import { ListarUsuariosQueryDto } from './dto/listar-usuarios-query.dto';
 import { OtorgarPermisoDto } from './dto/otorgar-permiso.dto';
 
@@ -47,8 +51,11 @@ export class UsuariosController {
     private readonly listarUsuariosUseCase: ListarUsuariosUseCase,
     private readonly obtenerUsuarioUseCase: ObtenerUsuarioUseCase,
     private readonly desactivarUsuarioUseCase: DesactivarUsuarioUseCase,
+    private readonly activarUsuarioUseCase: ActivarUsuarioUseCase,
+    private readonly editarUsuarioUseCase: EditarUsuarioUseCase,
     private readonly cambiarPasswordUseCase: CambiarPasswordUseCase,
     private readonly asignarRolUseCase: AsignarRolUseCase,
+    private readonly quitarRolUseCase: QuitarRolUseCase,
     private readonly otorgarPermisoIndividualUseCase: OtorgarPermisoIndividualUseCase,
     private readonly revocarPermisoIndividualUseCase: RevocarPermisoIndividualUseCase,
     @Inject('UsuarioRolRepository') private readonly usuarioRolRepository: UsuarioRolRepository,
@@ -59,7 +66,13 @@ export class UsuariosController {
   @RequierePermiso('usuarios.listar')
   async listar(@Query() query: ListarUsuariosQueryDto) {
     const { usuarios, total, page, limit } = await this.listarUsuariosUseCase.ejecutar(query);
-    return { usuarios: usuarios.map((usuario) => this.aRespuesta(usuario)), total, page, limit };
+    const usuariosConRoles = await Promise.all(
+      usuarios.map(async (usuario) => {
+        const roles = await this.usuarioRolRepository.listarNombresRolesPorUsuario(usuario.id);
+        return this.aRespuesta(usuario, roles);
+      }),
+    );
+    return { usuarios: usuariosConRoles, total, page, limit };
   }
 
   @Post()
@@ -82,11 +95,31 @@ export class UsuariosController {
     return this.aRespuesta(usuario, roles);
   }
 
+  @Patch(':id')
+  @UseGuards(PermisosGuard)
+  @RequierePermiso('usuarios.editar')
+  async editar(@Param('id') id: string, @Body() dto: EditarUsuarioDto) {
+    const usuario = await this.editarUsuarioUseCase.ejecutar({
+      usuarioId: id,
+      nombre: dto.nombre,
+      usuario: dto.usuario,
+    });
+    return this.aRespuesta(usuario);
+  }
+
   @Patch(':id/deactivate')
   @UseGuards(PermisosGuard)
   @RequierePermiso('usuarios.desactivar')
   async desactivar(@Param('id') id: string) {
     const usuario = await this.desactivarUsuarioUseCase.ejecutar(id);
+    return this.aRespuesta(usuario);
+  }
+
+  @Patch(':id/activate')
+  @UseGuards(PermisosGuard)
+  @RequierePermiso('usuarios.desactivar')
+  async activar(@Param('id') id: string) {
+    const usuario = await this.activarUsuarioUseCase.ejecutar(id);
     return this.aRespuesta(usuario);
   }
 
@@ -106,6 +139,13 @@ export class UsuariosController {
   @RequierePermiso('usuarios.asignar_rol')
   asignarRol(@Param('id') id: string, @Body() dto: AsignarRolDto) {
     return this.asignarRolUseCase.ejecutar({ usuarioId: id, rolId: dto.rolId });
+  }
+
+  @Delete(':id/roles/:rolId')
+  @UseGuards(PermisosGuard)
+  @RequierePermiso('usuarios.asignar_rol')
+  quitarRol(@Param('id') id: string, @Param('rolId') rolId: string) {
+    return this.quitarRolUseCase.ejecutar({ usuarioId: id, rolId });
   }
 
   @Post(':id/permissions')
