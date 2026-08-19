@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, MovimientoInventario as MovimientoPrisma, Producto as ProductoPrisma } from '@prisma/client';
+import {
+  MetodoPago,
+  Prisma,
+  MovimientoInventario as MovimientoPrisma,
+  Producto as ProductoPrisma,
+} from '@prisma/client';
 import { ConflictError, NotFoundError } from '../../shared/domain/errors';
 import { PrismaService } from '../../shared/infraestructure/prisma/prisma.service';
 import { MovimientoInventario } from '../domain/movimiento-inventario.entity';
@@ -56,13 +61,7 @@ export class InventarioTransaccionPrisma implements InventarioTransaccionPort {
 
       if (datos.fuentePago === 'FONDO_GENERAL') {
         const moneda = datos.moneda!;
-        const saldoActualizado = await tx.saldoGlobal.update({
-          where: { id: 1 },
-          data:
-            moneda === 'EFECTIVO'
-              ? { saldoEfectivo: { decrement: montoTotal } }
-              : { saldoTransferencia: { decrement: montoTotal } },
-        });
+        const saldoActualizado = await this.decrementarSaldoGlobalOFallar(tx, moneda, montoTotal);
 
         await tx.movimientoFondoGeneral.create({
           data: {
@@ -218,6 +217,33 @@ export class InventarioTransaccionPrisma implements InventarioTransaccionPort {
     if (resultado.count === 0) {
       throw new ConflictError(`Stock insuficiente para registrar ${etiqueta}`);
     }
+  }
+
+  private async decrementarSaldoGlobalOFallar(
+    tx: ClientePrisma,
+    moneda: MetodoPago,
+    monto: number,
+  ) {
+    const resultado = await tx.saldoGlobal.updateMany({
+      where: {
+        id: 1,
+        ...(moneda === 'EFECTIVO'
+          ? { saldoEfectivo: { gte: monto } }
+          : { saldoTransferencia: { gte: monto } }),
+      },
+      data:
+        moneda === 'EFECTIVO'
+          ? { saldoEfectivo: { decrement: monto } }
+          : { saldoTransferencia: { decrement: monto } },
+    });
+
+    if (resultado.count === 0) {
+      throw new ConflictError(
+        `Saldo insuficiente en Fondo General [${moneda === 'EFECTIVO' ? 'efectivo' : 'transferencia'}]`,
+      );
+    }
+
+    return tx.saldoGlobal.findUniqueOrThrow({ where: { id: 1 } });
   }
 
   private productoADominio(registro: ProductoPrisma): Producto {

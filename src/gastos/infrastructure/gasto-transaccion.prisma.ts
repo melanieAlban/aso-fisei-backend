@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Gasto as GastoPrisma } from '@prisma/client';
+import { Gasto as GastoPrisma, MetodoPago, Prisma } from '@prisma/client';
 import { ConflictError, NotFoundError } from '../../shared/domain/errors';
 import { PrismaService } from '../../shared/infraestructure/prisma/prisma.service';
 import { Gasto } from '../domain/gasto.entity';
@@ -8,6 +8,8 @@ import {
   GastoTransaccionPort,
   RegistrarGastoDatos,
 } from '../application/ports/gasto-transaccion.port';
+
+type ClientePrisma = Prisma.TransactionClient;
 
 @Injectable()
 export class GastoTransaccionPrisma implements GastoTransaccionPort {
@@ -44,13 +46,7 @@ export class GastoTransaccionPrisma implements GastoTransaccionPort {
 
       if (datos.fuentePago === 'FONDO_GENERAL') {
         const moneda = datos.moneda!;
-        const saldoActualizado = await tx.saldoGlobal.update({
-          where: { id: 1 },
-          data:
-            moneda === 'EFECTIVO'
-              ? { saldoEfectivo: { decrement: datos.monto } }
-              : { saldoTransferencia: { decrement: datos.monto } },
-        });
+        const saldoActualizado = await this.decrementarSaldoGlobalOFallar(tx, moneda, datos.monto);
 
         await tx.movimientoFondoGeneral.create({
           data: {
@@ -116,6 +112,33 @@ export class GastoTransaccionPrisma implements GastoTransaccionPort {
 
       return this.gastoADominio(gastoActualizado);
     });
+  }
+
+  private async decrementarSaldoGlobalOFallar(
+    tx: ClientePrisma,
+    moneda: MetodoPago,
+    monto: number,
+  ) {
+    const resultado = await tx.saldoGlobal.updateMany({
+      where: {
+        id: 1,
+        ...(moneda === 'EFECTIVO'
+          ? { saldoEfectivo: { gte: monto } }
+          : { saldoTransferencia: { gte: monto } }),
+      },
+      data:
+        moneda === 'EFECTIVO'
+          ? { saldoEfectivo: { decrement: monto } }
+          : { saldoTransferencia: { decrement: monto } },
+    });
+
+    if (resultado.count === 0) {
+      throw new ConflictError(
+        `Saldo insuficiente en Fondo General [${moneda === 'EFECTIVO' ? 'efectivo' : 'transferencia'}]`,
+      );
+    }
+
+    return tx.saldoGlobal.findUniqueOrThrow({ where: { id: 1 } });
   }
 
   private gastoADominio(registro: GastoPrisma): Gasto {
