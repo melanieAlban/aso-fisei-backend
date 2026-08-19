@@ -17,6 +17,12 @@ export class UsuarioRolRepositoryPrisma implements UsuarioRolRepository {
     await this.prisma.usuarioRol.create({ data: { usuarioId, rolId } });
   }
 
+  async quitar(usuarioId: string, rolId: string): Promise<void> {
+    await this.prisma.usuarioRol.delete({
+      where: { usuarioId_rolId: { usuarioId, rolId } },
+    });
+  }
+
   async listarNombresRolesPorUsuario(usuarioId: string): Promise<string[]> {
     const asignaciones = await this.prisma.usuarioRol.findMany({
       where: { usuarioId },

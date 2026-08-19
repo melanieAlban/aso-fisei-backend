@@ -3,5 +3,7 @@ export interface UsuarioRolRepository {
 
   asignar(usuarioId: string, rolId: string): Promise<void>;
 
+  quitar(usuarioId: string, rolId: string): Promise<void>;
+
   listarNombresRolesPorUsuario(usuarioId: string): Promise<string[]>;
 }
