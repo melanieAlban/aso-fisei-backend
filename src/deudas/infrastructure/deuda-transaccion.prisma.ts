@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { AbonoDeuda as AbonoPrisma, Deuda as DeudaPrisma } from '@prisma/client';
+import {
+  AbonoDeuda as AbonoPrisma,
+  Deuda as DeudaPrisma,
+  MetodoPago,
+  Prisma,
+} from '@prisma/client';
 import { ConflictError, NotFoundError } from '../../shared/domain/errors';
 import { PrismaService } from '../../shared/infraestructure/prisma/prisma.service';
 import { AbonoDeuda } from '../domain/abono-deuda.entity';
@@ -9,6 +14,8 @@ import {
   RegistrarAbonoDatos,
   ResultadoAbono,
 } from '../application/ports/deuda-transaccion.port';
+
+type ClientePrisma = Prisma.TransactionClient;
 
 @Injectable()
 export class DeudaTransaccionPrisma implements DeudaTransaccionPort {
@@ -53,15 +60,16 @@ export class DeudaTransaccionPrisma implements DeudaTransaccionPort {
       });
 
       const esCobro = deuda.tipo === 'POR_COBRAR';
-      const delta = esCobro ? datos.monto : -datos.monto;
 
-      const saldoActualizado = await tx.saldoGlobal.update({
-        where: { id: 1 },
-        data:
-          datos.metodoPago === 'EFECTIVO'
-            ? { saldoEfectivo: { increment: delta } }
-            : { saldoTransferencia: { increment: delta } },
-      });
+      const saldoActualizado = esCobro
+        ? await tx.saldoGlobal.update({
+            where: { id: 1 },
+            data:
+              datos.metodoPago === 'EFECTIVO'
+                ? { saldoEfectivo: { increment: datos.monto } }
+                : { saldoTransferencia: { increment: datos.monto } },
+          })
+        : await this.decrementarSaldoGlobalOFallar(tx, datos.metodoPago, datos.monto);
 
       await tx.movimientoFondoGeneral.create({
         data: {
@@ -81,6 +89,33 @@ export class DeudaTransaccionPrisma implements DeudaTransaccionPort {
         abono: this.abonoADominio(abonoCreado),
       };
     });
+  }
+
+  private async decrementarSaldoGlobalOFallar(
+    tx: ClientePrisma,
+    moneda: MetodoPago,
+    monto: number,
+  ) {
+    const resultado = await tx.saldoGlobal.updateMany({
+      where: {
+        id: 1,
+        ...(moneda === 'EFECTIVO'
+          ? { saldoEfectivo: { gte: monto } }
+          : { saldoTransferencia: { gte: monto } }),
+      },
+      data:
+        moneda === 'EFECTIVO'
+          ? { saldoEfectivo: { decrement: monto } }
+          : { saldoTransferencia: { decrement: monto } },
+    });
+
+    if (resultado.count === 0) {
+      throw new ConflictError(
+        `Saldo insuficiente en Fondo General [${moneda === 'EFECTIVO' ? 'efectivo' : 'transferencia'}]`,
+      );
+    }
+
+    return tx.saldoGlobal.findUniqueOrThrow({ where: { id: 1 } });
   }
 
   private deudaADominio(registro: DeudaPrisma): Deuda {
