@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { UsuariosModule } from '../../usuarios/infrastructure/usuarios.module';
+import { AuditoriaContextService } from '../../shared/infraestructure/auditoria/auditoria-context.service';
 import { ActualizarConfiguracionUseCase } from '../application/actualizar-configuracion.use-case';
 import { ActualizarProductoUseCase } from '../application/actualizar-producto.use-case';
 import { CrearProductoUseCase } from '../application/crear-producto.use-case';
@@ -42,8 +43,9 @@ import { ProductosController } from './productos.controller';
     },
     {
       provide: ActualizarProductoUseCase,
-      useFactory: (repo: ProductoRepository) => new ActualizarProductoUseCase(repo),
-      inject: ['ProductoRepository'],
+      useFactory: (repo: ProductoRepository, auditoria: AuditoriaContextService) =>
+        new ActualizarProductoUseCase(repo, auditoria),
+      inject: ['ProductoRepository', AuditoriaContextService],
     },
     {
       provide: ListarProductosUseCase,
@@ -68,9 +70,9 @@ import { ProductosController } from './productos.controller';
     },
     {
       provide: ActualizarConfiguracionUseCase,
-      useFactory: (config: ConfiguracionSistemaRepository) =>
-        new ActualizarConfiguracionUseCase(config),
-      inject: ['ConfiguracionSistemaRepository'],
+      useFactory: (config: ConfiguracionSistemaRepository, auditoria: AuditoriaContextService) =>
+        new ActualizarConfiguracionUseCase(config, auditoria),
+      inject: ['ConfiguracionSistemaRepository', AuditoriaContextService],
     },
     {
       provide: RegistrarCompraUseCase,

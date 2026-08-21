@@ -6,4 +6,6 @@ export interface UsuarioPermisoExtraRepository {
   }): Promise<void>;
 
   revocar(usuarioId: string, permisoId: string): Promise<void>;
+
+  listarCodigosPermisosExtraPorUsuario(usuarioId: string): Promise<string[]>;
 }

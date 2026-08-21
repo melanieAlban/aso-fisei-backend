@@ -1,9 +1,11 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AllExceptionsFilter } from './shared/infraestructure/filters/all-exceptions.filter';
+import { AuditoriaContextMiddleware } from './shared/infraestructure/auditoria/auditoria-context.middleware';
+import { AuditoriaContextModule } from './shared/infraestructure/auditoria/auditoria-context.module';
 import { AuditoriaInterceptor } from './shared/infraestructure/auditoria/auditoria.interceptor';
 import { TransformInterceptor } from './shared/infraestructure/interceptors/transform.interceptor';
 import { PrismaModule } from './shared/infraestructure/prisma/prisma.module';
@@ -19,6 +21,7 @@ import { UsuariosModule } from './usuarios/infrastructure/usuarios.module';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
+    AuditoriaContextModule,
     UsuariosModule,
     InventarioModule,
     CajaModule,
@@ -35,4 +38,8 @@ import { UsuariosModule } from './usuarios/infrastructure/usuarios.module';
     { provide: APP_INTERCEPTOR, useClass: AuditoriaInterceptor },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(AuditoriaContextMiddleware).forRoutes('*');
+  }
+}

@@ -17,4 +17,12 @@ export class UsuarioPermisoExtraRepositoryPrisma implements UsuarioPermisoExtraR
   async revocar(usuarioId: string, permisoId: string): Promise<void> {
     await this.prisma.usuarioPermisoExtra.deleteMany({ where: { usuarioId, permisoId } });
   }
+
+  async listarCodigosPermisosExtraPorUsuario(usuarioId: string): Promise<string[]> {
+    const registros = await this.prisma.usuarioPermisoExtra.findMany({
+      where: { usuarioId },
+      include: { permiso: true },
+    });
+    return registros.map((registro) => registro.permiso.codigo);
+  }
 }

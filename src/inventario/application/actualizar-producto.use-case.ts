@@ -1,9 +1,13 @@
+import { AuditoriaContextService } from '../../shared/infraestructure/auditoria/auditoria-context.service';
 import { NotFoundError } from '../../shared/domain/errors';
 import { Producto } from '../domain/producto.entity';
 import { ProductoRepository } from '../domain/producto.repository';
 
 export class ActualizarProductoUseCase {
-  constructor(private readonly productoRepository: ProductoRepository) {}
+  constructor(
+    private readonly productoRepository: ProductoRepository,
+    private readonly auditoriaContexto: AuditoriaContextService,
+  ) {}
 
   async ejecutar(datos: { id: string; nombre?: string; precioVenta?: number }): Promise<Producto> {
     const producto = await this.productoRepository.buscarPorId(datos.id);
@@ -11,6 +15,8 @@ export class ActualizarProductoUseCase {
     if (!producto) {
       throw new NotFoundError('Producto no encontrado');
     }
+
+    this.auditoriaContexto.setValorAnterior(producto);
 
     const productoActualizado = new Producto(
       producto.id,

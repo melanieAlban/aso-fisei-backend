@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { UsuariosModule } from '../../usuarios/infrastructure/usuarios.module';
+import { AuditoriaContextService } from '../../shared/infraestructure/auditoria/auditoria-context.service';
 import { AnularGastoUseCase } from '../application/anular-gasto.use-case';
 import { ListarCategoriasGastoUseCase } from '../application/listar-categorias-gasto.use-case';
 import { ListarGastosUseCase } from '../application/listar-gastos.use-case';
@@ -24,8 +25,12 @@ import { GastoRepositoryPrisma } from './gasto.repository.prisma';
     },
     {
       provide: AnularGastoUseCase,
-      useFactory: (transaccion: GastoTransaccionPort) => new AnularGastoUseCase(transaccion),
-      inject: ['GastoTransaccionPort'],
+      useFactory: (
+        transaccion: GastoTransaccionPort,
+        repo: GastoRepository,
+        auditoria: AuditoriaContextService,
+      ) => new AnularGastoUseCase(transaccion, repo, auditoria),
+      inject: ['GastoTransaccionPort', 'GastoRepository', AuditoriaContextService],
     },
     {
       provide: ListarGastosUseCase,

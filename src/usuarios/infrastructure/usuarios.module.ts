@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import { AuditoriaContextService } from '../../shared/infraestructure/auditoria/auditoria-context.service';
 import { ActivarUsuarioUseCase } from '../application/activar-usuario.use-case';
 import { AsignarRolUseCase } from '../application/asignar-rol.use-case';
 import { CambiarPasswordUseCase } from '../application/cambiar-password.use-case';
@@ -72,45 +73,51 @@ import { UsuariosController } from './usuarios.controller';
     },
     {
       provide: AsignarRolUseCase,
-      useFactory: (repo: UsuarioRolRepository) => new AsignarRolUseCase(repo),
-      inject: ['UsuarioRolRepository'],
+      useFactory: (repo: UsuarioRolRepository, auditoria: AuditoriaContextService) =>
+        new AsignarRolUseCase(repo, auditoria),
+      inject: ['UsuarioRolRepository', AuditoriaContextService],
     },
     {
       provide: OtorgarPermisoIndividualUseCase,
-      useFactory: (repo: UsuarioPermisoExtraRepository) =>
-        new OtorgarPermisoIndividualUseCase(repo),
-      inject: ['UsuarioPermisoExtraRepository'],
+      useFactory: (repo: UsuarioPermisoExtraRepository, auditoria: AuditoriaContextService) =>
+        new OtorgarPermisoIndividualUseCase(repo, auditoria),
+      inject: ['UsuarioPermisoExtraRepository', AuditoriaContextService],
     },
     {
       provide: RevocarPermisoIndividualUseCase,
-      useFactory: (repo: UsuarioPermisoExtraRepository) =>
-        new RevocarPermisoIndividualUseCase(repo),
-      inject: ['UsuarioPermisoExtraRepository'],
+      useFactory: (repo: UsuarioPermisoExtraRepository, auditoria: AuditoriaContextService) =>
+        new RevocarPermisoIndividualUseCase(repo, auditoria),
+      inject: ['UsuarioPermisoExtraRepository', AuditoriaContextService],
     },
     {
       provide: DesactivarUsuarioUseCase,
-      useFactory: (repo: UsuarioRepository) => new DesactivarUsuarioUseCase(repo),
-      inject: ['UsuarioRepository'],
+      useFactory: (repo: UsuarioRepository, auditoria: AuditoriaContextService) =>
+        new DesactivarUsuarioUseCase(repo, auditoria),
+      inject: ['UsuarioRepository', AuditoriaContextService],
     },
     {
       provide: ActivarUsuarioUseCase,
-      useFactory: (repo: UsuarioRepository) => new ActivarUsuarioUseCase(repo),
-      inject: ['UsuarioRepository'],
+      useFactory: (repo: UsuarioRepository, auditoria: AuditoriaContextService) =>
+        new ActivarUsuarioUseCase(repo, auditoria),
+      inject: ['UsuarioRepository', AuditoriaContextService],
     },
     {
       provide: EditarUsuarioUseCase,
-      useFactory: (repo: UsuarioRepository) => new EditarUsuarioUseCase(repo),
-      inject: ['UsuarioRepository'],
+      useFactory: (repo: UsuarioRepository, auditoria: AuditoriaContextService) =>
+        new EditarUsuarioUseCase(repo, auditoria),
+      inject: ['UsuarioRepository', AuditoriaContextService],
     },
     {
       provide: QuitarRolUseCase,
-      useFactory: (repo: UsuarioRolRepository) => new QuitarRolUseCase(repo),
-      inject: ['UsuarioRolRepository'],
+      useFactory: (repo: UsuarioRolRepository, auditoria: AuditoriaContextService) =>
+        new QuitarRolUseCase(repo, auditoria),
+      inject: ['UsuarioRolRepository', AuditoriaContextService],
     },
     {
       provide: CambiarPasswordUseCase,
-      useFactory: (repo: UsuarioRepository) => new CambiarPasswordUseCase(repo),
-      inject: ['UsuarioRepository'],
+      useFactory: (repo: UsuarioRepository, auditoria: AuditoriaContextService) =>
+        new CambiarPasswordUseCase(repo, auditoria),
+      inject: ['UsuarioRepository', AuditoriaContextService],
     },
     {
       provide: ListarUsuariosUseCase,
