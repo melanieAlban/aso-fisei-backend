@@ -334,3 +334,82 @@ model AbonoDeuda {
 
   @@map("abonos_deuda")
 }
+
+model Evento {
+  id          String       @id @default(uuid())
+  nombre      String
+  presupuesto Decimal?     @db.Decimal(10, 2)
+  estado      EstadoEvento @default(ACTIVO)
+  fechaInicio DateTime
+  fechaFin    DateTime?
+  fechaCierre DateTime?
+
+  tiposEntrada TipoEntrada[]
+  ingresos     IngresoEvento[]
+  gastos       GastoEvento[]
+
+  @@map("eventos")
+}
+
+enum EstadoEvento {
+  ACTIVO
+  CERRADO
+}
+
+model TipoEntrada {
+  id            String  @id @default(uuid())
+  eventoId      String
+  nombre        String
+  precio        Decimal @db.Decimal(10, 2)
+  cantidadTotal Int
+
+  evento       Evento               @relation(fields: [eventoId], references: [id])
+  asignaciones AsignacionEntradas[]
+
+  @@map("tipos_entrada")
+}
+
+model AsignacionEntradas {
+  id                String      @id @default(uuid())
+  tipoEntradaId     String
+  usuarioRegistroId String
+  nombreReferencia  String
+  cantidadAsignada  Int
+  cantidadVendida   Int         @default(0)
+  cantidadDevuelta  Int         @default(0)
+  dineroRecibido    Decimal     @db.Decimal(10, 2) @default(0)
+  metodoPago        MetodoPago?
+  fecha             DateTime    @default(now())
+
+  tipoEntrada TipoEntrada @relation(fields: [tipoEntradaId], references: [id])
+
+  @@map("asignaciones_entradas")
+}
+
+model IngresoEvento {
+  id          String     @id @default(uuid())
+  eventoId    String
+  usuarioId   String
+  descripcion String
+  monto       Decimal    @db.Decimal(10, 2)
+  metodoPago  MetodoPago
+  fecha       DateTime   @default(now())
+
+  evento Evento @relation(fields: [eventoId], references: [id])
+
+  @@map("ingresos_evento")
+}
+
+model GastoEvento {
+  id          String     @id @default(uuid())
+  eventoId    String
+  usuarioId   String
+  descripcion String
+  monto       Decimal    @db.Decimal(10, 2)
+  metodoPago  MetodoPago
+  fecha       DateTime   @default(now())
+
+  evento Evento @relation(fields: [eventoId], references: [id])
+
+  @@map("gastos_evento")
+}

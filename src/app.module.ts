@@ -13,6 +13,7 @@ import { AuditoriaModule } from './auditoria/infrastructure/auditoria.module';
 import { CajaModule } from './caja/infrastructure/caja.module';
 import { DashboardModule } from './dashboard/infrastructure/dashboard.module';
 import { DeudasModule } from './deudas/infrastructure/deudas.module';
+import { EventosModule } from './eventos/infrastructure/eventos.module';
 import { GastosModule } from './gastos/infrastructure/gastos.module';
 import { InventarioModule } from './inventario/infrastructure/inventario.module';
 import { UsuariosModule } from './usuarios/infrastructure/usuarios.module';
@@ -29,6 +30,7 @@ import { UsuariosModule } from './usuarios/infrastructure/usuarios.module';
     DeudasModule,
     DashboardModule,
     AuditoriaModule,
+    EventosModule,
   ],
   controllers: [AppController],
   providers: [
