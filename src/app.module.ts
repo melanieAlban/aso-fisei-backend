@@ -7,6 +7,7 @@ import { AllExceptionsFilter } from './shared/infraestructure/filters/all-except
 import { AuditoriaInterceptor } from './shared/infraestructure/auditoria/auditoria.interceptor';
 import { TransformInterceptor } from './shared/infraestructure/interceptors/transform.interceptor';
 import { PrismaModule } from './shared/infraestructure/prisma/prisma.module';
+import { AuditoriaModule } from './auditoria/infrastructure/auditoria.module';
 import { CajaModule } from './caja/infrastructure/caja.module';
 import { DashboardModule } from './dashboard/infrastructure/dashboard.module';
 import { DeudasModule } from './deudas/infrastructure/deudas.module';
@@ -24,6 +25,7 @@ import { UsuariosModule } from './usuarios/infrastructure/usuarios.module';
     GastosModule,
     DeudasModule,
     DashboardModule,
+    AuditoriaModule,
   ],
   controllers: [AppController],
   providers: [
