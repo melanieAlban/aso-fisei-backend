@@ -1,6 +1,7 @@
 import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor } from '@nestjs/common';
 import { Observable, tap } from 'rxjs';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditoriaContextService } from './auditoria-context.service';
 
 const METODOS_AUDITADOS = ['POST', 'PATCH', 'DELETE', 'PUT'];
 const CAMPOS_SENSIBLES = ['password', 'passwordHash', 'accessToken', 'refreshToken', 'nuevoPassword'];
@@ -9,7 +10,10 @@ const CAMPOS_SENSIBLES = ['password', 'passwordHash', 'accessToken', 'refreshTok
 export class AuditoriaInterceptor implements NestInterceptor {
   private readonly logger = new Logger(AuditoriaInterceptor.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditoriaContexto: AuditoriaContextService,
+  ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest();
@@ -31,6 +35,7 @@ export class AuditoriaInterceptor implements NestInterceptor {
     const usuarioId = request.user?.sub ?? this.extraerUsuarioId(data) ?? null;
     const modulo = this.extraerModulo(request.path ?? request.url ?? '');
     const accion = `${request.method} ${request.route?.path ?? request.path}`;
+    const valorAnterior = this.auditoriaContexto.obtenerValorAnterior();
 
     await this.prisma.auditoria.create({
       data: {
@@ -38,6 +43,7 @@ export class AuditoriaInterceptor implements NestInterceptor {
         modulo,
         accion,
         registroAfectado: request.params?.id ?? null,
+        valorAnterior: this.sanitizar(valorAnterior),
         valorNuevo: this.sanitizar(data),
         fecha: new Date(),
       },

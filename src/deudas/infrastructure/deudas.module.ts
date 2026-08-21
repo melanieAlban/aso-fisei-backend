@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { UsuariosModule } from '../../usuarios/infrastructure/usuarios.module';
+import { AuditoriaContextService } from '../../shared/infraestructure/auditoria/auditoria-context.service';
 import { CrearDeudaUseCase } from '../application/crear-deuda.use-case';
 import { ListarDeudasUseCase } from '../application/listar-deudas.use-case';
 import { ObtenerDeudaUseCase } from '../application/obtener-deuda.use-case';
@@ -33,8 +34,12 @@ import { DeudaRepositoryPrisma } from './deuda.repository.prisma';
     },
     {
       provide: RegistrarAbonoUseCase,
-      useFactory: (transaccion: DeudaTransaccionPort) => new RegistrarAbonoUseCase(transaccion),
-      inject: ['DeudaTransaccionPort'],
+      useFactory: (
+        transaccion: DeudaTransaccionPort,
+        repo: DeudaRepository,
+        auditoria: AuditoriaContextService,
+      ) => new RegistrarAbonoUseCase(transaccion, repo, auditoria),
+      inject: ['DeudaTransaccionPort', 'DeudaRepository', AuditoriaContextService],
     },
   ],
 })

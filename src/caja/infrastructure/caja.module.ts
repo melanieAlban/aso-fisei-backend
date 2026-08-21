@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { UsuariosModule } from '../../usuarios/infrastructure/usuarios.module';
+import { AuditoriaContextService } from '../../shared/infraestructure/auditoria/auditoria-context.service';
 import { AbrirCajaUseCase } from '../application/abrir-caja.use-case';
 import { AjustarSaldoInicialFondoUseCase } from '../application/ajustar-saldo-inicial-fondo.use-case';
 import { AnularItemVentaUseCase } from '../application/anular-item-venta.use-case';
@@ -54,13 +55,18 @@ import { VentaRepositoryPrisma } from './venta.repository.prisma';
     },
     {
       provide: RealizarArqueoUseCase,
-      useFactory: (transaccion: CajaTransaccionPort) => new RealizarArqueoUseCase(transaccion),
-      inject: ['CajaTransaccionPort'],
+      useFactory: (
+        transaccion: CajaTransaccionPort,
+        cajaRepo: CajaRepository,
+        auditoria: AuditoriaContextService,
+      ) => new RealizarArqueoUseCase(transaccion, cajaRepo, auditoria),
+      inject: ['CajaTransaccionPort', 'CajaRepository', AuditoriaContextService],
     },
     {
       provide: ClasificarDiferenciaArqueoUseCase,
-      useFactory: (repo: ArqueoCajaRepository) => new ClasificarDiferenciaArqueoUseCase(repo),
-      inject: ['ArqueoCajaRepository'],
+      useFactory: (repo: ArqueoCajaRepository, auditoria: AuditoriaContextService) =>
+        new ClasificarDiferenciaArqueoUseCase(repo, auditoria),
+      inject: ['ArqueoCajaRepository', AuditoriaContextService],
     },
     {
       provide: ObtenerSaldoFondoGeneralUseCase,
@@ -95,8 +101,12 @@ import { VentaRepositoryPrisma } from './venta.repository.prisma';
     },
     {
       provide: AnularItemVentaUseCase,
-      useFactory: (transaccion: CajaTransaccionPort) => new AnularItemVentaUseCase(transaccion),
-      inject: ['CajaTransaccionPort'],
+      useFactory: (
+        transaccion: CajaTransaccionPort,
+        ventaRepo: VentaRepository,
+        auditoria: AuditoriaContextService,
+      ) => new AnularItemVentaUseCase(transaccion, ventaRepo, auditoria),
+      inject: ['CajaTransaccionPort', 'VentaRepository', AuditoriaContextService],
     },
     {
       provide: DevolverAlquilerUseCase,
