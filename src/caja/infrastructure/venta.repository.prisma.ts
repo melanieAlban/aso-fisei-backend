@@ -147,6 +147,7 @@ export class VentaRepositoryPrisma implements VentaRepository {
       registro.estado,
       registro.motivoAnulacion,
       registro.usuarioAnulacionId,
+      registro.duracionMinutos,
     );
   }
 }

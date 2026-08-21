@@ -98,13 +98,15 @@ model Auditoria {
 }
 
 model Producto {
-  id            String   @id @default(uuid())
-  nombre        String
-  costoUnitario Decimal  @db.Decimal(10, 2) @default(0)
-  precioVenta   Decimal  @db.Decimal(10, 2)
-  stockActual   Int      @default(0)
-  activo        Boolean  @default(true)
-  createdAt     DateTime @default(now())
+  id             String   @id @default(uuid())
+  nombre         String
+  costoUnitario  Decimal  @db.Decimal(10, 2) @default(0)
+  precioVenta    Decimal  @db.Decimal(10, 2)
+  stockActual    Int      @default(0)
+  activo         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  cobraPorTiempo Boolean  @default(false)
+  tarifaPorHora  Decimal? @db.Decimal(10, 2)
 
   movimientos MovimientoInventario[]
 
@@ -246,6 +248,7 @@ model DetalleVenta {
   estado             EstadoDetalleVenta  @default(ACTIVO)
   motivoAnulacion    String?
   usuarioAnulacionId String?
+  duracionMinutos    Int?
 
   venta Venta @relation(fields: [ventaId], references: [id])
 

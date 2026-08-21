@@ -255,6 +255,8 @@ export class InventarioTransaccionPrisma implements InventarioTransaccionPort {
       registro.stockActual,
       registro.activo,
       registro.createdAt,
+      registro.cobraPorTiempo,
+      registro.tarifaPorHora ? registro.tarifaPorHora.toNumber() : null,
     );
   }
 
