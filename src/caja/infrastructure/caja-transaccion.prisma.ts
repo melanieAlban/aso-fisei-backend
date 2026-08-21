@@ -21,6 +21,7 @@ import {
   AjusteFondoResultado,
   AnularItemVentaDatos,
   CajaTransaccionPort,
+  LineaVentaDatos,
   RealizarArqueoDatos,
   RegistrarVentaDatos,
 } from '../application/ports/caja-transaccion.port';
@@ -62,15 +63,24 @@ export class CajaTransaccionPrisma implements CajaTransaccionPort {
       const lineasConProducto: Array<{
         linea: (typeof datos.lineas)[number];
         producto: Prisma.ProductoGetPayload<Record<string, never>>;
+        precioUnitario: number;
       }> = [];
       for (const linea of datos.lineas) {
         const producto = await tx.producto.findUnique({ where: { id: linea.productoId } });
         if (!producto) {
           throw new NotFoundError(`Producto no encontrado: ${linea.productoId}`);
         }
-        lineasConProducto.push({ linea, producto });
+        lineasConProducto.push({
+          linea,
+          producto,
+          precioUnitario: this.calcularPrecioUnitario(producto, linea),
+        });
       }
 
+      // El stock de productos que cobran por tiempo (ej. mesa de billar) no representa
+      // unidades físicas limitadas — es un servicio. Se sigue descontando igual que
+      // cualquier producto porque el flujo de venta lo requiere, pero se recomienda
+      // mantener su stock alto vía un ajuste manual de inventario, como ya se hace hoy.
       for (const { linea, producto } of lineasConProducto) {
         const resultado = await tx.producto.updateMany({
           where: { id: linea.productoId, stockActual: { gte: linea.cantidad } },
@@ -82,7 +92,7 @@ export class CajaTransaccionPrisma implements CajaTransaccionPort {
       }
 
       const total = lineasConProducto.reduce(
-        (acumulado, { linea, producto }) => acumulado + linea.cantidad * producto.precioVenta.toNumber(),
+        (acumulado, { linea, precioUnitario }) => acumulado + linea.cantidad * precioUnitario,
         0,
       );
 
@@ -96,15 +106,16 @@ export class CajaTransaccionPrisma implements CajaTransaccionPort {
       });
 
       const detallesCreados: DetallePrisma[] = [];
-      for (const { linea, producto } of lineasConProducto) {
+      for (const { linea, precioUnitario } of lineasConProducto) {
         const detalle = await tx.detalleVenta.create({
           data: {
             ventaId: ventaCreada.id,
             productoId: linea.productoId,
             cantidad: linea.cantidad,
-            precioUnitario: producto.precioVenta,
+            precioUnitario,
             esAlquiler: linea.esAlquiler ?? false,
             estadoAlquiler: linea.esAlquiler ? (linea.estadoAlquiler ?? 'PENDIENTE') : null,
+            duracionMinutos: linea.duracionMinutos ?? null,
           },
         });
         detallesCreados.push(detalle);
@@ -115,6 +126,28 @@ export class CajaTransaccionPrisma implements CajaTransaccionPort {
         detalles: detallesCreados.map((detalle) => this.detalleADominio(detalle)),
       };
     });
+  }
+
+  private calcularPrecioUnitario(
+    producto: Prisma.ProductoGetPayload<Record<string, never>>,
+    linea: LineaVentaDatos,
+  ): number {
+    if (!producto.cobraPorTiempo) {
+      return producto.precioVenta.toNumber();
+    }
+
+    if (!linea.duracionMinutos || linea.duracionMinutos <= 0) {
+      throw new Error(
+        `El producto "${producto.nombre}" cobra por tiempo: debe indicar duracionMinutos (entero positivo)`,
+      );
+    }
+
+    const tarifaPorHora = producto.tarifaPorHora?.toNumber() ?? 0;
+    return this.redondearDosDecimales(tarifaPorHora * (linea.duracionMinutos / 60));
+  }
+
+  private redondearDosDecimales(valor: number): number {
+    return Math.round((valor + Number.EPSILON) * 100) / 100;
   }
 
   async anularItemVenta(datos: AnularItemVentaDatos): Promise<DetalleVenta> {
@@ -367,6 +400,7 @@ export class CajaTransaccionPrisma implements CajaTransaccionPort {
       registro.estado,
       registro.motivoAnulacion,
       registro.usuarioAnulacionId,
+      registro.duracionMinutos,
     );
   }
 

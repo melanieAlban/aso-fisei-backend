@@ -15,6 +15,7 @@ export interface LineaVentaDatos {
   cantidad: number;
   esAlquiler?: boolean;
   estadoAlquiler?: EstadoAlquiler;
+  duracionMinutos?: number;
 }
 
 export interface RegistrarVentaDatos {

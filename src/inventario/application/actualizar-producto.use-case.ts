@@ -9,7 +9,13 @@ export class ActualizarProductoUseCase {
     private readonly auditoriaContexto: AuditoriaContextService,
   ) {}
 
-  async ejecutar(datos: { id: string; nombre?: string; precioVenta?: number }): Promise<Producto> {
+  async ejecutar(datos: {
+    id: string;
+    nombre?: string;
+    precioVenta?: number;
+    cobraPorTiempo?: boolean;
+    tarifaPorHora?: number;
+  }): Promise<Producto> {
     const producto = await this.productoRepository.buscarPorId(datos.id);
 
     if (!producto) {
@@ -17,6 +23,8 @@ export class ActualizarProductoUseCase {
     }
 
     this.auditoriaContexto.setValorAnterior(producto);
+
+    const cobraPorTiempo = datos.cobraPorTiempo ?? producto.cobraPorTiempo;
 
     const productoActualizado = new Producto(
       producto.id,
@@ -26,6 +34,8 @@ export class ActualizarProductoUseCase {
       producto.stockActual,
       producto.activo,
       producto.createdAt,
+      cobraPorTiempo,
+      cobraPorTiempo ? (datos.tarifaPorHora ?? producto.tarifaPorHora) : null,
     );
 
     return this.productoRepository.actualizar(productoActualizado);

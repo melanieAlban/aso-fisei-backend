@@ -13,6 +13,7 @@ export class DetalleVenta {
     public readonly estado: EstadoDetalleVenta,
     public readonly motivoAnulacion: string | null,
     public readonly usuarioAnulacionId: string | null,
+    public readonly duracionMinutos: number | null = null,
   ) {
     if (cantidad <= 0) {
       throw new Error('La cantidad debe ser mayor a 0');

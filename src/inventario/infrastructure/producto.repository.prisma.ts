@@ -17,6 +17,8 @@ export class ProductoRepositoryPrisma implements ProductoRepository {
         precioVenta: producto.precioVenta,
         stockActual: producto.stockActual,
         activo: producto.activo,
+        cobraPorTiempo: producto.cobraPorTiempo,
+        tarifaPorHora: producto.tarifaPorHora,
       },
     });
 
@@ -66,6 +68,8 @@ export class ProductoRepositoryPrisma implements ProductoRepository {
         nombre: producto.nombre,
         precioVenta: producto.precioVenta,
         activo: producto.activo,
+        cobraPorTiempo: producto.cobraPorTiempo,
+        tarifaPorHora: producto.tarifaPorHora,
       },
     });
 
@@ -81,6 +85,8 @@ export class ProductoRepositoryPrisma implements ProductoRepository {
       registro.stockActual,
       registro.activo,
       registro.createdAt,
+      registro.cobraPorTiempo,
+      registro.tarifaPorHora ? registro.tarifaPorHora.toNumber() : null,
     );
   }
 }

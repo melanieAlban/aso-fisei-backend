@@ -7,6 +7,7 @@ import {
   IsEnum,
   IsInt,
   IsOptional,
+  IsPositive,
   IsUUID,
   Min,
   ValidateNested,
@@ -27,6 +28,11 @@ export class LineaVentaDto {
   @IsOptional()
   @IsEnum(EstadoAlquiler)
   estadoAlquiler?: EstadoAlquiler;
+
+  @IsOptional()
+  @IsInt()
+  @IsPositive()
+  duracionMinutos?: number;
 }
 
 export class RegistrarVentaDto {
