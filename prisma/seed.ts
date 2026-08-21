@@ -45,6 +45,9 @@ const PERMISOS: Array<{ codigo: string; descripcion: string }> = [
   { codigo: 'eventos.listar', descripcion: 'Listar eventos' },
   { codigo: 'eventos.editar', descripcion: 'Editar eventos' },
   { codigo: 'eventos.anular', descripcion: 'Anular eventos' },
+  { codigo: 'eventos.cerrar', descripcion: 'Cerrar eventos y transferir utilidad al Fondo General' },
+  { codigo: 'eventos.gestionar_entradas', descripcion: 'Crear tipos de entrada y gestionar asignaciones' },
+  { codigo: 'eventos.registrar_movimiento', descripcion: 'Registrar ingresos y gastos manuales de un evento' },
 
   { codigo: 'auditoria.listar', descripcion: 'Listar registros de auditoría' },
 ];
