@@ -168,25 +168,6 @@ async function main() {
     create: { id: 1, saldoEfectivo: 0, saldoTransferencia: 0 },
   });
 
-  console.log('Sembrando productos de ejemplo...');
-  const PRODUCTOS = [
-    { nombre: 'Papas fritas', precioVenta: 1.0 },
-    { nombre: 'Chicles', precioVenta: 0.25 },
-    { nombre: 'Agua embotellada', precioVenta: 0.75 },
-    { nombre: 'Gaseosa', precioVenta: 1.5 },
-    { nombre: 'Snacks salados', precioVenta: 1.25 },
-    { nombre: 'Dulces surtidos', precioVenta: 0.5 },
-  ];
-
-  for (const producto of PRODUCTOS) {
-    const existente = await prisma.producto.findFirst({ where: { nombre: producto.nombre } });
-    if (!existente) {
-      await prisma.producto.create({
-        data: { nombre: producto.nombre, precioVenta: producto.precioVenta, stockActual: 0 },
-      });
-    }
-  }
-
   console.log('Seed completado.');
   console.log(`Usuario admin -> usuario: "admin" | password: "${passwordAdmin}"`);
 }
