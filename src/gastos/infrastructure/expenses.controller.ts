@@ -47,7 +47,8 @@ export class ExpensesController {
       monto: dto.monto,
       categoria: dto.categoria,
       fuentePago: dto.fuentePago,
-      moneda: dto.moneda,
+      montoEfectivoFondo: dto.montoEfectivoFondo,
+      montoTransferenciaFondo: dto.montoTransferenciaFondo,
     });
   }
 

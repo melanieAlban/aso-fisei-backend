@@ -91,16 +91,34 @@ export class CajaTransaccionPrisma implements CajaTransaccionPort {
         }
       }
 
-      const total = lineasConProducto.reduce(
-        (acumulado, { linea, precioUnitario }) => acumulado + linea.cantidad * precioUnitario,
-        0,
+      const total = this.redondearDosDecimales(
+        lineasConProducto.reduce(
+          (acumulado, { linea, precioUnitario }) => acumulado + linea.cantidad * precioUnitario,
+          0,
+        ),
       );
+
+      // El total SIEMPRE se calcula aquí a partir de las líneas — nunca se
+      // confía en un total enviado por el cliente. Lo único que viene del
+      // cliente es cómo se reparte ese total entre efectivo y transferencia
+      // (pago único o mixto), y esa suma debe coincidir exactamente.
+      const montoEfectivo = datos.montoEfectivo;
+      const montoTransferencia = datos.montoTransferencia;
+      if (Math.round((montoEfectivo + montoTransferencia) * 100) !== Math.round(total * 100)) {
+        throw new Error(
+          `La suma de efectivo y transferencia (${(montoEfectivo + montoTransferencia).toFixed(2)}) no coincide con el total de la venta (${total.toFixed(2)})`,
+        );
+      }
+
+      const metodoPago = montoTransferencia === 0 ? 'EFECTIVO' : montoEfectivo === 0 ? 'TRANSFERENCIA' : null;
 
       const ventaCreada = await tx.venta.create({
         data: {
           usuarioId: datos.usuarioId,
           cajaId: cajaAbierta.id,
-          metodoPago: datos.metodoPago,
+          metodoPago,
+          montoEfectivo,
+          montoTransferencia,
           total,
         },
       });
@@ -191,23 +209,33 @@ export class CajaTransaccionPrisma implements CajaTransaccionPort {
 
         const ahora = new Date();
 
-        const detallesEfectivo = await tx.detalleVenta.findMany({
-          where: { estado: 'ACTIVO', venta: { cajaId: caja.id, metodoPago: 'EFECTIVO' } },
-          select: { cantidad: true, precioUnitario: true },
+        // Cada venta puede tener pago mixto (montoEfectivo/montoTransferencia).
+        // Si se anuló algún ítem, su total original ya no coincide con la suma
+        // de líneas activas — se escala la parte efectivo/transferencia por la
+        // misma proporción (ej. si se anuló el 30% del total, se descuenta el
+        // 30% de cada moneda en la misma proporción en que se pagaron).
+        const ventasCaja = await tx.venta.findMany({
+          where: { cajaId: caja.id },
+          select: {
+            total: true,
+            montoEfectivo: true,
+            montoTransferencia: true,
+            detalle: { where: { estado: 'ACTIVO' }, select: { cantidad: true, precioUnitario: true } },
+          },
         });
-        const totalVentasEfectivo = detallesEfectivo.reduce(
-          (acumulado, detalle) => acumulado + detalle.cantidad * detalle.precioUnitario.toNumber(),
-          0,
-        );
 
-        const detallesTransferencia = await tx.detalleVenta.findMany({
-          where: { estado: 'ACTIVO', venta: { cajaId: caja.id, metodoPago: 'TRANSFERENCIA' } },
-          select: { cantidad: true, precioUnitario: true },
-        });
-        const totalVentasTransferencia = detallesTransferencia.reduce(
-          (acumulado, detalle) => acumulado + detalle.cantidad * detalle.precioUnitario.toNumber(),
-          0,
-        );
+        let totalVentasEfectivo = 0;
+        let totalVentasTransferencia = 0;
+        for (const venta of ventasCaja) {
+          const totalOriginal = venta.total.toNumber();
+          const totalActivo = venta.detalle.reduce(
+            (acumulado, detalle) => acumulado + detalle.cantidad * detalle.precioUnitario.toNumber(),
+            0,
+          );
+          const factor = totalOriginal > 0 ? totalActivo / totalOriginal : 0;
+          totalVentasEfectivo += venta.montoEfectivo.toNumber() * factor;
+          totalVentasTransferencia += venta.montoTransferencia.toNumber() * factor;
+        }
 
         const gastosEfectivo = await tx.gasto.aggregate({
           where: {
@@ -383,6 +411,8 @@ export class CajaTransaccionPrisma implements CajaTransaccionPort {
       registro.usuarioId,
       registro.cajaId,
       registro.metodoPago,
+      registro.montoEfectivo.toNumber(),
+      registro.montoTransferencia.toNumber(),
       registro.total.toNumber(),
       registro.fecha,
     );

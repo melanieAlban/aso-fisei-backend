@@ -146,20 +146,30 @@ export class DashboardService {
       };
     }
 
-    const detalles = await this.prisma.detalleVenta.findMany({
-      where: { estado: 'ACTIVO', venta: { cajaId: caja.id } },
-      select: { cantidad: true, precioUnitario: true, venta: { select: { metodoPago: true } } },
+    // Se agrega por VENTA (no por línea) porque una venta con pago mixto
+    // reparte su total entre efectivo y transferencia; si se anuló algún
+    // ítem, se escala esa parte proporcionalmente a lo que quedó activo.
+    const ventas = await this.prisma.venta.findMany({
+      where: { cajaId: caja.id },
+      select: {
+        total: true,
+        montoEfectivo: true,
+        montoTransferencia: true,
+        detalle: { where: { estado: 'ACTIVO' }, select: { cantidad: true, precioUnitario: true } },
+      },
     });
 
     let ventasEfectivoHoy = 0;
     let ventasTransferenciaHoy = 0;
-    for (const d of detalles) {
-      const subtotal = d.cantidad * d.precioUnitario.toNumber();
-      if (d.venta.metodoPago === 'EFECTIVO') {
-        ventasEfectivoHoy += subtotal;
-      } else {
-        ventasTransferenciaHoy += subtotal;
-      }
+    for (const venta of ventas) {
+      const totalActivo = venta.detalle.reduce(
+        (acumulado, detalle) => acumulado + detalle.cantidad * detalle.precioUnitario.toNumber(),
+        0,
+      );
+      const totalOriginal = venta.total.toNumber();
+      const factor = totalOriginal > 0 ? totalActivo / totalOriginal : 0;
+      ventasEfectivoHoy += venta.montoEfectivo.toNumber() * factor;
+      ventasTransferenciaHoy += venta.montoTransferencia.toNumber() * factor;
     }
 
     return {

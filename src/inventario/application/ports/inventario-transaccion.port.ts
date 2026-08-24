@@ -9,14 +9,17 @@ export interface RegistrarCompraDatos {
   productoId: string;
   usuarioId: string;
   cantidad: number;
-  costoUnitario: number;
+  /** Opcional: productos sin costo de adquisición real (copias, servicios) se registran en 0. */
+  costoUnitario?: number;
   fuentePago: FuentePagoValor;
   /**
-   * Solo aplica cuando fuentePago es FONDO_GENERAL: indica si el gasto se descuenta
-   * del saldo en efectivo o en transferencia del Fondo General. Se ignora si
-   * fuentePago es EFECTIVO_CAJA (ese dinero siempre es efectivo físico de caja).
+   * Solo aplican cuando fuentePago es FONDO_GENERAL: cómo se divide el costo
+   * entre las dos monedas del fondo (pueden ser ambas > 0 para un pago mixto).
+   * Se ignoran si fuentePago es EFECTIVO_CAJA (ese dinero siempre es efectivo
+   * físico de caja) o si el costo total es 0.
    */
-  moneda?: MonedaFondo;
+  montoEfectivoFondo?: number;
+  montoTransferenciaFondo?: number;
 }
 
 export interface RegistrarPerdidaDatos {

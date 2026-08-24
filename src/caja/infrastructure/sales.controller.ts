@@ -34,7 +34,8 @@ export class SalesController {
   registrar(@Body() dto: RegistrarVentaDto, @Req() req: RequestConUsuario) {
     return this.registrarVentaUseCase.ejecutar({
       usuarioId: req.user.sub,
-      metodoPago: dto.metodoPago,
+      montoEfectivo: dto.montoEfectivo,
+      montoTransferencia: dto.montoTransferencia,
       lineas: dto.lineas,
     });
   }

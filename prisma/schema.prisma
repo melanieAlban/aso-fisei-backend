@@ -143,7 +143,11 @@ model Gasto {
   monto                   Decimal     @db.Decimal(10, 2)
   categoria               String
   fuentePago              FuentePago
-  moneda                  MetodoPago?
+  // Solo aplican cuando fuentePago = FONDO_GENERAL. Permiten pagar un gasto
+  // dividido entre las dos monedas del fondo (ej. parte efectivo, parte
+  // transferencia); su suma debe ser igual a "monto".
+  montoEfectivoFondo      Decimal     @db.Decimal(10, 2) @default(0)
+  montoTransferenciaFondo Decimal     @db.Decimal(10, 2) @default(0)
   generadoAutomaticamente Boolean     @default(false)
   estado                  EstadoGasto @default(ACTIVO)
   motivoAnulacion         String?
@@ -219,12 +223,17 @@ enum ClasificacionDiferencia {
 }
 
 model Venta {
-  id         String   @id @default(uuid())
+  id         String      @id @default(uuid())
   usuarioId  String
   cajaId     String
-  metodoPago MetodoPago
-  total      Decimal  @db.Decimal(10, 2)
-  fecha      DateTime @default(now())
+  // Informativo/derivado: EFECTIVO o TRANSFERENCIA si la venta se pagó
+  // enteramente en una moneda, null si fue pago mixto (ver montoEfectivo/
+  // montoTransferencia, que son la fuente de verdad para caja y reportes).
+  metodoPago MetodoPago?
+  montoEfectivo      Decimal @db.Decimal(10, 2) @default(0)
+  montoTransferencia Decimal @db.Decimal(10, 2) @default(0)
+  total      Decimal     @db.Decimal(10, 2)
+  fecha      DateTime    @default(now())
 
   caja    Caja           @relation(fields: [cajaId], references: [id])
   detalle DetalleVenta[]

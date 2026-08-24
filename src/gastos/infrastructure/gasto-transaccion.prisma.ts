@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { Gasto as GastoPrisma, MetodoPago, Prisma } from '@prisma/client';
+import { Gasto as GastoPrisma } from '@prisma/client';
 import { ConflictError, NotFoundError } from '../../shared/domain/errors';
+import { aplicarSplitFondoGeneralOFallar } from '../../shared/infraestructure/fondo-general/fondo-general.util';
 import { PrismaService } from '../../shared/infraestructure/prisma/prisma.service';
 import { Gasto } from '../domain/gasto.entity';
 import {
@@ -8,8 +9,6 @@ import {
   GastoTransaccionPort,
   RegistrarGastoDatos,
 } from '../application/ports/gasto-transaccion.port';
-
-type ClientePrisma = Prisma.TransactionClient;
 
 @Injectable()
 export class GastoTransaccionPrisma implements GastoTransaccionPort {
@@ -26,10 +25,16 @@ export class GastoTransaccionPrisma implements GastoTransaccionPort {
         }
       }
 
-      if (datos.fuentePago === 'FONDO_GENERAL' && !datos.moneda) {
-        throw new Error(
-          'Debe indicar la moneda (EFECTIVO o TRANSFERENCIA) cuando el gasto se paga desde el Fondo General',
-        );
+      const montoEfectivoFondo = datos.montoEfectivoFondo ?? 0;
+      const montoTransferenciaFondo = datos.montoTransferenciaFondo ?? 0;
+
+      if (datos.fuentePago === 'FONDO_GENERAL') {
+        const sumaCentavos = Math.round((montoEfectivoFondo + montoTransferenciaFondo) * 100);
+        if (sumaCentavos !== Math.round(datos.monto * 100)) {
+          throw new Error(
+            'La suma de efectivo y transferencia del Fondo General debe ser igual al monto del gasto',
+          );
+        }
       }
 
       const gastoCreado = await tx.gasto.create({
@@ -39,26 +44,21 @@ export class GastoTransaccionPrisma implements GastoTransaccionPort {
           monto: datos.monto,
           categoria: datos.categoria,
           fuentePago: datos.fuentePago,
-          moneda: datos.fuentePago === 'FONDO_GENERAL' ? datos.moneda : null,
+          montoEfectivoFondo: datos.fuentePago === 'FONDO_GENERAL' ? montoEfectivoFondo : 0,
+          montoTransferenciaFondo: datos.fuentePago === 'FONDO_GENERAL' ? montoTransferenciaFondo : 0,
           generadoAutomaticamente: false,
         },
       });
 
       if (datos.fuentePago === 'FONDO_GENERAL') {
-        const moneda = datos.moneda!;
-        const saldoActualizado = await this.decrementarSaldoGlobalOFallar(tx, moneda, datos.monto);
-
-        await tx.movimientoFondoGeneral.create({
-          data: {
-            usuarioId: datos.usuarioId,
-            tipo: 'GASTO',
-            monto: datos.monto,
-            metodoPago: moneda,
-            saldoResultanteEfectivo: saldoActualizado.saldoEfectivo,
-            saldoResultanteTransferencia: saldoActualizado.saldoTransferencia,
-            referenciaId: gastoCreado.id,
-            descripcion: gastoCreado.descripcion,
-          },
+        await aplicarSplitFondoGeneralOFallar(tx, {
+          usuarioId: datos.usuarioId,
+          tipo: 'GASTO',
+          montoEfectivo: montoEfectivoFondo,
+          montoTransferencia: montoTransferenciaFondo,
+          direccion: 'DECREMENTO',
+          referenciaId: gastoCreado.id,
+          descripcion: gastoCreado.descripcion,
         });
       }
 
@@ -85,60 +85,20 @@ export class GastoTransaccionPrisma implements GastoTransaccionPort {
         },
       });
 
-      if (gasto.fuentePago === 'FONDO_GENERAL' && gasto.moneda) {
-        const monto = gasto.monto.toNumber();
-
-        const saldoActualizado = await tx.saldoGlobal.update({
-          where: { id: 1 },
-          data:
-            gasto.moneda === 'EFECTIVO'
-              ? { saldoEfectivo: { increment: monto } }
-              : { saldoTransferencia: { increment: monto } },
-        });
-
-        await tx.movimientoFondoGeneral.create({
-          data: {
-            usuarioId: datos.usuarioId,
-            tipo: 'GASTO',
-            monto,
-            metodoPago: gasto.moneda,
-            saldoResultanteEfectivo: saldoActualizado.saldoEfectivo,
-            saldoResultanteTransferencia: saldoActualizado.saldoTransferencia,
-            referenciaId: gasto.id,
-            descripcion: `Reversión por anulación de gasto: ${gasto.descripcion}`,
-          },
+      if (gasto.fuentePago === 'FONDO_GENERAL') {
+        await aplicarSplitFondoGeneralOFallar(tx, {
+          usuarioId: datos.usuarioId,
+          tipo: 'GASTO',
+          montoEfectivo: gasto.montoEfectivoFondo.toNumber(),
+          montoTransferencia: gasto.montoTransferenciaFondo.toNumber(),
+          direccion: 'INCREMENTO',
+          referenciaId: gasto.id,
+          descripcion: `Reversión por anulación de gasto: ${gasto.descripcion}`,
         });
       }
 
       return this.gastoADominio(gastoActualizado);
     });
-  }
-
-  private async decrementarSaldoGlobalOFallar(
-    tx: ClientePrisma,
-    moneda: MetodoPago,
-    monto: number,
-  ) {
-    const resultado = await tx.saldoGlobal.updateMany({
-      where: {
-        id: 1,
-        ...(moneda === 'EFECTIVO'
-          ? { saldoEfectivo: { gte: monto } }
-          : { saldoTransferencia: { gte: monto } }),
-      },
-      data:
-        moneda === 'EFECTIVO'
-          ? { saldoEfectivo: { decrement: monto } }
-          : { saldoTransferencia: { decrement: monto } },
-    });
-
-    if (resultado.count === 0) {
-      throw new ConflictError(
-        `Saldo insuficiente en Fondo General [${moneda === 'EFECTIVO' ? 'efectivo' : 'transferencia'}]`,
-      );
-    }
-
-    return tx.saldoGlobal.findUniqueOrThrow({ where: { id: 1 } });
   }
 
   private gastoADominio(registro: GastoPrisma): Gasto {
@@ -149,7 +109,8 @@ export class GastoTransaccionPrisma implements GastoTransaccionPort {
       registro.monto.toNumber(),
       registro.categoria,
       registro.fuentePago,
-      registro.moneda,
+      registro.montoEfectivoFondo.toNumber(),
+      registro.montoTransferenciaFondo.toNumber(),
       registro.generadoAutomaticamente,
       registro.estado,
       registro.motivoAnulacion,

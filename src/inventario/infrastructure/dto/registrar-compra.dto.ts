@@ -1,5 +1,5 @@
-import { FuentePago, MetodoPago } from '@prisma/client';
-import { IsEnum, IsInt, IsNumber, IsPositive, IsUUID, Min, ValidateIf } from 'class-validator';
+import { FuentePago } from '@prisma/client';
+import { IsEnum, IsInt, IsNumber, IsOptional, IsUUID, Min, ValidateIf } from 'class-validator';
 
 export class RegistrarCompraDto {
   @IsUUID()
@@ -9,14 +9,29 @@ export class RegistrarCompraDto {
   @Min(1)
   cantidad: number;
 
+  // Opcional: productos como copias o servicios (billar) pueden no tener un
+  // costo de adquisición real — se registra en 0 y solo se descuenta el gasto
+  // si el usuario indica un monto mayor a 0.
+  @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })
-  @IsPositive()
-  costoUnitario: number;
+  @Min(0)
+  costoUnitario?: number;
 
   @IsEnum(FuentePago)
   fuentePago: FuentePago;
 
+  // Solo aplican cuando fuentePago es FONDO_GENERAL y el costo total es > 0.
+  // Permiten dividir la compra entre las dos monedas del fondo; su suma debe
+  // ser igual al costo total — el backend lo valida.
   @ValidateIf((dto: RegistrarCompraDto) => dto.fuentePago === 'FONDO_GENERAL')
-  @IsEnum(MetodoPago)
-  moneda?: MetodoPago;
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  montoEfectivoFondo?: number;
+
+  @ValidateIf((dto: RegistrarCompraDto) => dto.fuentePago === 'FONDO_GENERAL')
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  montoTransferenciaFondo?: number;
 }

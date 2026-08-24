@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import {
-  MetodoPago,
   Prisma,
   MovimientoInventario as MovimientoPrisma,
   Producto as ProductoPrisma,
 } from '@prisma/client';
 import { ConflictError, NotFoundError } from '../../shared/domain/errors';
+import { aplicarSplitFondoGeneralOFallar } from '../../shared/infraestructure/fondo-general/fondo-general.util';
 import { PrismaService } from '../../shared/infraestructure/prisma/prisma.service';
 import { MovimientoInventario } from '../domain/movimiento-inventario.entity';
 import { Producto } from '../domain/producto.entity';
@@ -39,13 +39,22 @@ export class InventarioTransaccionPrisma implements InventarioTransaccionPort {
         }
       }
 
-      if (datos.fuentePago === 'FONDO_GENERAL' && !datos.moneda) {
-        throw new Error(
-          'Debe indicar la moneda (EFECTIVO o TRANSFERENCIA) cuando la compra se paga desde el Fondo General',
-        );
-      }
+      // costoUnitario es opcional (productos como copias o servicios pueden no
+      // tener un costo de adquisición real) — sin costo, la compra solo suma
+      // stock y no genera ningún movimiento de dinero.
+      const costoUnitario = datos.costoUnitario ?? 0;
+      const montoTotal = Math.round(costoUnitario * datos.cantidad * 100) / 100;
+      const montoEfectivoFondo = datos.montoEfectivoFondo ?? 0;
+      const montoTransferenciaFondo = datos.montoTransferenciaFondo ?? 0;
 
-      const montoTotal = Math.round(datos.costoUnitario * datos.cantidad * 100) / 100;
+      if (montoTotal > 0 && datos.fuentePago === 'FONDO_GENERAL') {
+        const sumaCentavos = Math.round((montoEfectivoFondo + montoTransferenciaFondo) * 100);
+        if (sumaCentavos !== Math.round(montoTotal * 100)) {
+          throw new Error(
+            'La suma de efectivo y transferencia del Fondo General debe ser igual al total de la compra',
+          );
+        }
+      }
 
       const gasto = await tx.gasto.create({
         data: {
@@ -54,26 +63,22 @@ export class InventarioTransaccionPrisma implements InventarioTransaccionPort {
           monto: montoTotal,
           categoria: 'Compra de productos',
           fuentePago: datos.fuentePago,
-          moneda: datos.fuentePago === 'FONDO_GENERAL' ? datos.moneda : null,
+          montoEfectivoFondo: datos.fuentePago === 'FONDO_GENERAL' && montoTotal > 0 ? montoEfectivoFondo : 0,
+          montoTransferenciaFondo:
+            datos.fuentePago === 'FONDO_GENERAL' && montoTotal > 0 ? montoTransferenciaFondo : 0,
           generadoAutomaticamente: true,
         },
       });
 
-      if (datos.fuentePago === 'FONDO_GENERAL') {
-        const moneda = datos.moneda!;
-        const saldoActualizado = await this.decrementarSaldoGlobalOFallar(tx, moneda, montoTotal);
-
-        await tx.movimientoFondoGeneral.create({
-          data: {
-            usuarioId: datos.usuarioId,
-            tipo: 'GASTO',
-            monto: montoTotal,
-            metodoPago: moneda,
-            saldoResultanteEfectivo: saldoActualizado.saldoEfectivo,
-            saldoResultanteTransferencia: saldoActualizado.saldoTransferencia,
-            referenciaId: gasto.id,
-            descripcion: gasto.descripcion,
-          },
+      if (montoTotal > 0 && datos.fuentePago === 'FONDO_GENERAL') {
+        await aplicarSplitFondoGeneralOFallar(tx, {
+          usuarioId: datos.usuarioId,
+          tipo: 'GASTO',
+          montoEfectivo: montoEfectivoFondo,
+          montoTransferencia: montoTransferenciaFondo,
+          direccion: 'DECREMENTO',
+          referenciaId: gasto.id,
+          descripcion: gasto.descripcion,
         });
       }
 
@@ -104,7 +109,7 @@ export class InventarioTransaccionPrisma implements InventarioTransaccionPort {
         where: { id: datos.productoId },
         data: {
           stockActual: { increment: datos.cantidad },
-          costoUnitario: datos.costoUnitario,
+          costoUnitario,
         },
       });
 
@@ -217,33 +222,6 @@ export class InventarioTransaccionPrisma implements InventarioTransaccionPort {
     if (resultado.count === 0) {
       throw new ConflictError(`Stock insuficiente para registrar ${etiqueta}`);
     }
-  }
-
-  private async decrementarSaldoGlobalOFallar(
-    tx: ClientePrisma,
-    moneda: MetodoPago,
-    monto: number,
-  ) {
-    const resultado = await tx.saldoGlobal.updateMany({
-      where: {
-        id: 1,
-        ...(moneda === 'EFECTIVO'
-          ? { saldoEfectivo: { gte: monto } }
-          : { saldoTransferencia: { gte: monto } }),
-      },
-      data:
-        moneda === 'EFECTIVO'
-          ? { saldoEfectivo: { decrement: monto } }
-          : { saldoTransferencia: { decrement: monto } },
-    });
-
-    if (resultado.count === 0) {
-      throw new ConflictError(
-        `Saldo insuficiente en Fondo General [${moneda === 'EFECTIVO' ? 'efectivo' : 'transferencia'}]`,
-      );
-    }
-
-    return tx.saldoGlobal.findUniqueOrThrow({ where: { id: 1 } });
   }
 
   private productoADominio(registro: ProductoPrisma): Producto {

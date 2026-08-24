@@ -1,4 +1,4 @@
-import { FuentePagoValor, Gasto, MonedaFondo } from '../../domain/gasto.entity';
+import { FuentePagoValor, Gasto } from '../../domain/gasto.entity';
 
 export interface RegistrarGastoDatos {
   usuarioId: string;
@@ -6,7 +6,13 @@ export interface RegistrarGastoDatos {
   monto: number;
   categoria: string;
   fuentePago: FuentePagoValor;
-  moneda?: MonedaFondo;
+  /**
+   * Solo aplican cuando fuentePago es FONDO_GENERAL: cómo se divide el monto
+   * entre las dos monedas del fondo (pueden ser ambas > 0 para un pago mixto).
+   * Su suma debe ser igual a "monto".
+   */
+  montoEfectivoFondo?: number;
+  montoTransferenciaFondo?: number;
 }
 
 export interface AnularGastoDatos {

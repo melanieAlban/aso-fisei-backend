@@ -2,7 +2,6 @@ import { ArqueoCaja } from '../../domain/arqueo-caja.entity';
 import { Caja } from '../../domain/caja.entity';
 import { DetalleVenta, EstadoAlquiler } from '../../domain/detalle-venta.entity';
 import { MovimientoFondoGeneral } from '../../domain/movimiento-fondo-general.entity';
-import { MetodoPago } from '../../domain/venta.entity';
 import { VentaConDetalle } from '../../domain/venta.repository';
 
 export interface AbrirCajaDatos {
@@ -20,7 +19,14 @@ export interface LineaVentaDatos {
 
 export interface RegistrarVentaDatos {
   usuarioId: string;
-  metodoPago: MetodoPago;
+  /**
+   * Cuánto de esta venta se pagó en cada moneda — pueden ser ambos > 0 para un
+   * pago mixto. Su suma debe ser igual al total calculado a partir de las
+   * líneas (el backend lo valida, nunca confía en un total enviado por el
+   * cliente).
+   */
+  montoEfectivo: number;
+  montoTransferencia: number;
   lineas: LineaVentaDatos[];
 }
 

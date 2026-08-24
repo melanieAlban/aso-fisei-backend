@@ -65,9 +65,12 @@ export class VentaRepositoryPrisma implements VentaRepository {
   }
 
   async resumenDiarioPorCaja(cajaId: string): Promise<ResumenDiario[]> {
-    const detalles = await this.prisma.detalleVenta.findMany({
-      where: { estado: 'ACTIVO', venta: { cajaId } },
-      include: { venta: true },
+    // Se agrega por VENTA (no por línea) porque una venta con pago mixto
+    // reparte su total entre efectivo y transferencia. Si se anuló algún
+    // ítem, se escala esa parte proporcionalmente a lo que quedó activo.
+    const ventas = await this.prisma.venta.findMany({
+      where: { cajaId },
+      include: { detalle: { where: { estado: 'ACTIVO' } } },
     });
 
     const porDia = new Map<
@@ -75,21 +78,25 @@ export class VentaRepositoryPrisma implements VentaRepository {
       { totalEfectivo: number; totalTransferencia: number; ventasIds: Set<string> }
     >();
 
-    for (const detalle of detalles) {
-      const fechaClave = detalle.venta.fecha.toISOString().slice(0, 10);
+    for (const venta of ventas) {
+      const totalActivo = venta.detalle.reduce(
+        (acumulado, detalle) => acumulado + detalle.cantidad * detalle.precioUnitario.toNumber(),
+        0,
+      );
+      if (totalActivo === 0) continue;
+
+      const totalOriginal = venta.total.toNumber();
+      const factor = totalOriginal > 0 ? totalActivo / totalOriginal : 0;
+      const fechaClave = venta.fecha.toISOString().slice(0, 10);
       const entrada = porDia.get(fechaClave) ?? {
         totalEfectivo: 0,
         totalTransferencia: 0,
         ventasIds: new Set<string>(),
       };
-      const subtotal = detalle.cantidad * detalle.precioUnitario.toNumber();
 
-      if (detalle.venta.metodoPago === 'EFECTIVO') {
-        entrada.totalEfectivo += subtotal;
-      } else {
-        entrada.totalTransferencia += subtotal;
-      }
-      entrada.ventasIds.add(detalle.venta.id);
+      entrada.totalEfectivo += venta.montoEfectivo.toNumber() * factor;
+      entrada.totalTransferencia += venta.montoTransferencia.toNumber() * factor;
+      entrada.ventasIds.add(venta.id);
 
       porDia.set(fechaClave, entrada);
     }
@@ -130,6 +137,8 @@ export class VentaRepositoryPrisma implements VentaRepository {
       registro.usuarioId,
       registro.cajaId,
       registro.metodoPago,
+      registro.montoEfectivo.toNumber(),
+      registro.montoTransferencia.toNumber(),
       registro.total.toNumber(),
       registro.fecha,
     );

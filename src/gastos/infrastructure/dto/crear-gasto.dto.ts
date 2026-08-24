@@ -1,5 +1,5 @@
-import { FuentePago, MetodoPago } from '@prisma/client';
-import { IsEnum, IsNotEmpty, IsNumber, IsPositive, IsString, ValidateIf } from 'class-validator';
+import { FuentePago } from '@prisma/client';
+import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, Min, ValidateIf } from 'class-validator';
 
 export class CrearGastoDto {
   @IsString()
@@ -17,7 +17,18 @@ export class CrearGastoDto {
   @IsEnum(FuentePago)
   fuentePago: FuentePago;
 
+  // Solo aplican cuando fuentePago es FONDO_GENERAL. Permiten dividir el gasto
+  // entre las dos monedas del fondo (ej. parte efectivo, parte transferencia);
+  // su suma debe ser igual a "monto" — el backend lo valida.
   @ValidateIf((dto: CrearGastoDto) => dto.fuentePago === 'FONDO_GENERAL')
-  @IsEnum(MetodoPago)
-  moneda?: MetodoPago;
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  montoEfectivoFondo?: number;
+
+  @ValidateIf((dto: CrearGastoDto) => dto.fuentePago === 'FONDO_GENERAL')
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  montoTransferenciaFondo?: number;
 }
