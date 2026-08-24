@@ -9,7 +9,8 @@ export interface RegistrarCompraDatos {
   productoId: string;
   usuarioId: string;
   cantidad: number;
-  costoUnitario: number;
+  /** Opcional: productos sin costo de adquisición real (copias, servicios) se registran en 0. */
+  costoUnitario?: number;
   fuentePago: FuentePagoValor;
   /**
    * Solo aplica cuando fuentePago es FONDO_GENERAL: indica si el gasto se descuenta

@@ -39,13 +39,17 @@ export class InventarioTransaccionPrisma implements InventarioTransaccionPort {
         }
       }
 
-      if (datos.fuentePago === 'FONDO_GENERAL' && !datos.moneda) {
+      // costoUnitario es opcional (productos como copias o servicios pueden no
+      // tener un costo de adquisición real) — sin costo, la compra solo suma
+      // stock y no genera ningún movimiento de dinero.
+      const costoUnitario = datos.costoUnitario ?? 0;
+      const montoTotal = Math.round(costoUnitario * datos.cantidad * 100) / 100;
+
+      if (montoTotal > 0 && datos.fuentePago === 'FONDO_GENERAL' && !datos.moneda) {
         throw new Error(
           'Debe indicar la moneda (EFECTIVO o TRANSFERENCIA) cuando la compra se paga desde el Fondo General',
         );
       }
-
-      const montoTotal = Math.round(datos.costoUnitario * datos.cantidad * 100) / 100;
 
       const gasto = await tx.gasto.create({
         data: {
@@ -54,12 +58,12 @@ export class InventarioTransaccionPrisma implements InventarioTransaccionPort {
           monto: montoTotal,
           categoria: 'Compra de productos',
           fuentePago: datos.fuentePago,
-          moneda: datos.fuentePago === 'FONDO_GENERAL' ? datos.moneda : null,
+          moneda: datos.fuentePago === 'FONDO_GENERAL' && montoTotal > 0 ? datos.moneda : null,
           generadoAutomaticamente: true,
         },
       });
 
-      if (datos.fuentePago === 'FONDO_GENERAL') {
+      if (montoTotal > 0 && datos.fuentePago === 'FONDO_GENERAL') {
         const moneda = datos.moneda!;
         const saldoActualizado = await this.decrementarSaldoGlobalOFallar(tx, moneda, montoTotal);
 
