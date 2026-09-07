@@ -24,6 +24,24 @@ export class IngresoEventoRepositoryPrisma implements IngresoEventoRepository {
     return this.aDominio(creado);
   }
 
+  async guardar(ingreso: IngresoEvento): Promise<IngresoEvento> {
+    const actualizado = await this.prisma.ingresoEvento.update({
+      where: { id: ingreso.id },
+      data: {
+        descripcion: ingreso.descripcion,
+        monto: ingreso.monto,
+        metodoPago: ingreso.metodoPago,
+      },
+    });
+
+    return this.aDominio(actualizado);
+  }
+
+  async buscarPorId(id: string): Promise<IngresoEvento | null> {
+    const encontrado = await this.prisma.ingresoEvento.findUnique({ where: { id } });
+    return encontrado ? this.aDominio(encontrado) : null;
+  }
+
   async listarPorEvento(eventoId: string): Promise<IngresoEvento[]> {
     const registros = await this.prisma.ingresoEvento.findMany({ where: { eventoId } });
     return registros.map((registro) => this.aDominio(registro));

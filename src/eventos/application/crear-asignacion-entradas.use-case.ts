@@ -16,6 +16,9 @@ export class CrearAsignacionEntradasUseCase {
     usuarioRegistroId: string;
     nombreReferencia: string;
     cantidadAsignada: number;
+    telefono?: string;
+    semestre?: string;
+    carrera?: string;
   }): Promise<AsignacionEntradas> {
     const tipoEntrada = await this.tipoEntradaRepository.buscarPorId(datos.tipoEntradaId);
 
@@ -43,6 +46,10 @@ export class CrearAsignacionEntradasUseCase {
       0,
       null,
       new Date(),
+      0,
+      datos.telefono ?? null,
+      datos.semestre ?? null,
+      datos.carrera ?? null,
     );
 
     return this.asignacionRepository.crear(asignacion);

@@ -1,27 +1,28 @@
 import { IsInt, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, Min } from 'class-validator';
 
-export class CrearTipoEntradaDto {
+export class EditarTipoEntradaDto {
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
-  nombre: string;
+  nombre?: string;
 
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @IsPositive()
-  precio: number;
-
-  @IsInt()
-  @IsPositive()
-  cantidadTotal: number;
-
-  // Precio especial por combo (ej. 3 entradas por $10.50). Si se manda uno,
-  // debe mandarse el otro también.
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })
   @IsPositive()
-  precioCombo?: number;
+  precio?: number;
+
+  @IsOptional()
+  @IsInt()
+  @IsPositive()
+  cantidadTotal?: number;
+
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @IsPositive()
+  precioCombo?: number | null;
 
   @IsOptional()
   @IsInt()
   @Min(2)
-  cantidadCombo?: number;
+  cantidadCombo?: number | null;
 }

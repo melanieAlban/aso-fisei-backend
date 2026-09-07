@@ -8,6 +8,9 @@ import { CrearAsignacionEntradasUseCase } from '../application/crear-asignacion-
 import { CrearEventoUseCase } from '../application/crear-evento.use-case';
 import { CrearTipoEntradaUseCase } from '../application/crear-tipo-entrada.use-case';
 import { EditarEventoUseCase } from '../application/editar-evento.use-case';
+import { EditarGastoEventoUseCase } from '../application/editar-gasto-evento.use-case';
+import { EditarIngresoEventoUseCase } from '../application/editar-ingreso-evento.use-case';
+import { EditarTipoEntradaUseCase } from '../application/editar-tipo-entrada.use-case';
 import { ListarAsignacionesUseCase } from '../application/listar-asignaciones.use-case';
 import { ListarEventosUseCase } from '../application/listar-eventos.use-case';
 import { ListarGastosEventoUseCase } from '../application/listar-gastos-evento.use-case';
@@ -144,6 +147,24 @@ import { TipoEntradaRepositoryPrisma } from './tipo-entrada.repository.prisma';
       provide: ListarGastosEventoUseCase,
       useFactory: (repo: GastoEventoRepository) => new ListarGastosEventoUseCase(repo),
       inject: ['GastoEventoRepository'],
+    },
+    {
+      provide: EditarTipoEntradaUseCase,
+      useFactory: (tipoRepo: TipoEntradaRepository, eventoRepo: EventoRepository) =>
+        new EditarTipoEntradaUseCase(tipoRepo, eventoRepo),
+      inject: ['TipoEntradaRepository', 'EventoRepository'],
+    },
+    {
+      provide: EditarIngresoEventoUseCase,
+      useFactory: (ingresoRepo: IngresoEventoRepository, eventoRepo: EventoRepository) =>
+        new EditarIngresoEventoUseCase(ingresoRepo, eventoRepo),
+      inject: ['IngresoEventoRepository', 'EventoRepository'],
+    },
+    {
+      provide: EditarGastoEventoUseCase,
+      useFactory: (gastoRepo: GastoEventoRepository, eventoRepo: EventoRepository) =>
+        new EditarGastoEventoUseCase(gastoRepo, eventoRepo),
+      inject: ['GastoEventoRepository', 'EventoRepository'],
     },
   ],
 })

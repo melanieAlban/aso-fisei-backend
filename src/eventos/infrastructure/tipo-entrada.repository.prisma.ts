@@ -16,10 +16,27 @@ export class TipoEntradaRepositoryPrisma implements TipoEntradaRepository {
         nombre: tipoEntrada.nombre,
         precio: tipoEntrada.precio,
         cantidadTotal: tipoEntrada.cantidadTotal,
+        precioCombo: tipoEntrada.precioCombo,
+        cantidadCombo: tipoEntrada.cantidadCombo,
       },
     });
 
     return this.aDominio(creado);
+  }
+
+  async guardar(tipoEntrada: TipoEntrada): Promise<TipoEntrada> {
+    const actualizado = await this.prisma.tipoEntrada.update({
+      where: { id: tipoEntrada.id },
+      data: {
+        nombre: tipoEntrada.nombre,
+        precio: tipoEntrada.precio,
+        cantidadTotal: tipoEntrada.cantidadTotal,
+        precioCombo: tipoEntrada.precioCombo,
+        cantidadCombo: tipoEntrada.cantidadCombo,
+      },
+    });
+
+    return this.aDominio(actualizado);
   }
 
   async buscarPorId(id: string): Promise<TipoEntrada | null> {
@@ -39,6 +56,8 @@ export class TipoEntradaRepositoryPrisma implements TipoEntradaRepository {
       registro.nombre,
       registro.precio.toNumber(),
       registro.cantidadTotal,
+      registro.precioCombo ? registro.precioCombo.toNumber() : null,
+      registro.cantidadCombo,
     );
   }
 }

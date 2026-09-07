@@ -12,6 +12,10 @@ export class AsignacionEntradas {
     public readonly dineroRecibido: number,
     public readonly metodoPago: MetodoPagoAsignacion | null,
     public readonly fecha: Date,
+    public readonly cantidadVendidaCombo: number = 0,
+    public readonly telefono: string | null = null,
+    public readonly semestre: string | null = null,
+    public readonly carrera: string | null = null,
   ) {
     if (nombreReferencia.trim().length === 0) {
       throw new Error('La referencia es requerida');
@@ -24,6 +28,12 @@ export class AsignacionEntradas {
     }
     if (cantidadVendida + cantidadDevuelta > cantidadAsignada) {
       throw new Error('La cantidad vendida más devuelta no puede exceder la cantidad asignada');
+    }
+    if (cantidadVendidaCombo < 0) {
+      throw new Error('La cantidad vendida en combo no puede ser negativa');
+    }
+    if (cantidadVendidaCombo > cantidadVendida) {
+      throw new Error('La cantidad vendida en combo no puede exceder la cantidad vendida total');
     }
     if (dineroRecibido < 0) {
       throw new Error('El dinero recibido no puede ser negativo');

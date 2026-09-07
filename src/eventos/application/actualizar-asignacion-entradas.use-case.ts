@@ -13,7 +13,13 @@ export class ActualizarAsignacionEntradasUseCase {
 
   async ejecutar(datos: {
     id: string;
+    nombreReferencia?: string;
+    telefono?: string | null;
+    semestre?: string | null;
+    carrera?: string | null;
+    cantidadAsignada?: number;
     cantidadVendida?: number;
+    cantidadVendidaCombo?: number;
     cantidadDevuelta?: number;
     dineroRecibido?: number;
     metodoPago?: MetodoPagoAsignacion;
@@ -43,13 +49,17 @@ export class ActualizarAsignacionEntradasUseCase {
       actual.id,
       actual.tipoEntradaId,
       actual.usuarioRegistroId,
-      actual.nombreReferencia,
-      actual.cantidadAsignada,
+      datos.nombreReferencia ?? actual.nombreReferencia,
+      datos.cantidadAsignada ?? actual.cantidadAsignada,
       datos.cantidadVendida ?? actual.cantidadVendida,
       datos.cantidadDevuelta ?? actual.cantidadDevuelta,
       datos.dineroRecibido ?? actual.dineroRecibido,
       datos.metodoPago ?? actual.metodoPago,
       actual.fecha,
+      datos.cantidadVendidaCombo ?? actual.cantidadVendidaCombo,
+      datos.telefono !== undefined ? datos.telefono : actual.telefono,
+      datos.semestre !== undefined ? datos.semestre : actual.semestre,
+      datos.carrera !== undefined ? datos.carrera : actual.carrera,
     );
 
     return this.asignacionRepository.actualizar(actualizada);

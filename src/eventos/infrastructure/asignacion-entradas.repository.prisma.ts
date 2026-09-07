@@ -15,8 +15,12 @@ export class AsignacionEntradasRepositoryPrisma implements AsignacionEntradasRep
         tipoEntradaId: asignacion.tipoEntradaId,
         usuarioRegistroId: asignacion.usuarioRegistroId,
         nombreReferencia: asignacion.nombreReferencia,
+        telefono: asignacion.telefono,
+        semestre: asignacion.semestre,
+        carrera: asignacion.carrera,
         cantidadAsignada: asignacion.cantidadAsignada,
         cantidadVendida: asignacion.cantidadVendida,
+        cantidadVendidaCombo: asignacion.cantidadVendidaCombo,
         cantidadDevuelta: asignacion.cantidadDevuelta,
         dineroRecibido: asignacion.dineroRecibido,
         metodoPago: asignacion.metodoPago,
@@ -31,7 +35,13 @@ export class AsignacionEntradasRepositoryPrisma implements AsignacionEntradasRep
     const actualizado = await this.prisma.asignacionEntradas.update({
       where: { id: asignacion.id },
       data: {
+        nombreReferencia: asignacion.nombreReferencia,
+        telefono: asignacion.telefono,
+        semestre: asignacion.semestre,
+        carrera: asignacion.carrera,
+        cantidadAsignada: asignacion.cantidadAsignada,
         cantidadVendida: asignacion.cantidadVendida,
+        cantidadVendidaCombo: asignacion.cantidadVendidaCombo,
         cantidadDevuelta: asignacion.cantidadDevuelta,
         dineroRecibido: asignacion.dineroRecibido,
         metodoPago: asignacion.metodoPago,
@@ -66,6 +76,10 @@ export class AsignacionEntradasRepositoryPrisma implements AsignacionEntradasRep
       registro.dineroRecibido.toNumber(),
       registro.metodoPago,
       registro.fecha,
+      registro.cantidadVendidaCombo,
+      registro.telefono,
+      registro.semestre,
+      registro.carrera,
     );
   }
 }

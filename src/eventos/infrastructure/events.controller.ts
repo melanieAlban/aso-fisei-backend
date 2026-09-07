@@ -10,6 +10,9 @@ import { CrearAsignacionEntradasUseCase } from '../application/crear-asignacion-
 import { CrearEventoUseCase } from '../application/crear-evento.use-case';
 import { CrearTipoEntradaUseCase } from '../application/crear-tipo-entrada.use-case';
 import { EditarEventoUseCase } from '../application/editar-evento.use-case';
+import { EditarGastoEventoUseCase } from '../application/editar-gasto-evento.use-case';
+import { EditarIngresoEventoUseCase } from '../application/editar-ingreso-evento.use-case';
+import { EditarTipoEntradaUseCase } from '../application/editar-tipo-entrada.use-case';
 import { ListarAsignacionesUseCase } from '../application/listar-asignaciones.use-case';
 import { ListarEventosUseCase } from '../application/listar-eventos.use-case';
 import { ListarGastosEventoUseCase } from '../application/listar-gastos-evento.use-case';
@@ -24,6 +27,9 @@ import { CrearAsignacionEntradasDto } from './dto/crear-asignacion-entradas.dto'
 import { CrearEventoDto } from './dto/crear-evento.dto';
 import { CrearTipoEntradaDto } from './dto/crear-tipo-entrada.dto';
 import { EditarEventoDto } from './dto/editar-evento.dto';
+import { EditarGastoEventoDto } from './dto/editar-gasto-evento.dto';
+import { EditarIngresoEventoDto } from './dto/editar-ingreso-evento.dto';
+import { EditarTipoEntradaDto } from './dto/editar-tipo-entrada.dto';
 import { ListarEventosQueryDto } from './dto/listar-eventos-query.dto';
 import { RegistrarGastoEventoDto } from './dto/registrar-gasto-evento.dto';
 import { RegistrarIngresoEventoDto } from './dto/registrar-ingreso-evento.dto';
@@ -51,6 +57,9 @@ export class EventsController {
     private readonly registrarGastoEventoUseCase: RegistrarGastoEventoUseCase,
     private readonly listarIngresosEventoUseCase: ListarIngresosEventoUseCase,
     private readonly listarGastosEventoUseCase: ListarGastosEventoUseCase,
+    private readonly editarTipoEntradaUseCase: EditarTipoEntradaUseCase,
+    private readonly editarIngresoEventoUseCase: EditarIngresoEventoUseCase,
+    private readonly editarGastoEventoUseCase: EditarGastoEventoUseCase,
   ) {}
 
   @Post()
@@ -116,12 +125,28 @@ export class EventsController {
       nombre: dto.nombre,
       precio: dto.precio,
       cantidadTotal: dto.cantidadTotal,
+      precioCombo: dto.precioCombo,
+      cantidadCombo: dto.cantidadCombo,
     });
   }
 
   @Get(':id/ticket-types')
   listarTiposEntrada(@Param('id') id: string) {
     return this.listarTiposEntradaUseCase.ejecutar(id);
+  }
+
+  @Patch(':id/ticket-types/:tipoId')
+  @UseGuards(PermisosGuard)
+  @RequierePermiso('eventos.crear')
+  editarTipoEntrada(@Param('tipoId') tipoId: string, @Body() dto: EditarTipoEntradaDto) {
+    return this.editarTipoEntradaUseCase.ejecutar({
+      id: tipoId,
+      nombre: dto.nombre,
+      precio: dto.precio,
+      cantidadTotal: dto.cantidadTotal,
+      precioCombo: dto.precioCombo,
+      cantidadCombo: dto.cantidadCombo,
+    });
   }
 
   @Post(':id/ticket-assignments')
@@ -137,6 +162,9 @@ export class EventsController {
       usuarioRegistroId: req.user.sub,
       nombreReferencia: dto.nombreReferencia,
       cantidadAsignada: dto.cantidadAsignada,
+      telefono: dto.telefono,
+      semestre: dto.semestre,
+      carrera: dto.carrera,
     });
   }
 
@@ -172,6 +200,18 @@ export class EventsController {
     });
   }
 
+  @Patch(':id/income/:incomeId')
+  @UseGuards(PermisosGuard)
+  @RequierePermiso('eventos.registrar_movimiento')
+  editarIngreso(@Param('incomeId') incomeId: string, @Body() dto: EditarIngresoEventoDto) {
+    return this.editarIngresoEventoUseCase.ejecutar({
+      id: incomeId,
+      descripcion: dto.descripcion,
+      monto: dto.monto,
+      metodoPago: dto.metodoPago,
+    });
+  }
+
   @Post(':id/expenses')
   @UseGuards(PermisosGuard)
   @RequierePermiso('eventos.registrar_movimiento')
@@ -183,6 +223,18 @@ export class EventsController {
     return this.registrarGastoEventoUseCase.ejecutar({
       eventoId: id,
       usuarioId: req.user.sub,
+      descripcion: dto.descripcion,
+      monto: dto.monto,
+      metodoPago: dto.metodoPago,
+    });
+  }
+
+  @Patch(':id/expenses/:expenseId')
+  @UseGuards(PermisosGuard)
+  @RequierePermiso('eventos.registrar_movimiento')
+  editarGasto(@Param('expenseId') expenseId: string, @Body() dto: EditarGastoEventoDto) {
+    return this.editarGastoEventoUseCase.ejecutar({
+      id: expenseId,
       descripcion: dto.descripcion,
       monto: dto.monto,
       metodoPago: dto.metodoPago,

@@ -14,6 +14,8 @@ export class CrearTipoEntradaUseCase {
     nombre: string;
     precio: number;
     cantidadTotal: number;
+    precioCombo?: number;
+    cantidadCombo?: number;
   }): Promise<TipoEntrada> {
     const evento = await this.eventoRepository.buscarPorId(datos.eventoId);
 
@@ -30,6 +32,8 @@ export class CrearTipoEntradaUseCase {
       datos.nombre,
       datos.precio,
       datos.cantidadTotal,
+      datos.precioCombo ?? null,
+      datos.cantidadCombo ?? null,
     );
 
     return this.tipoEntradaRepository.crear(tipoEntrada);

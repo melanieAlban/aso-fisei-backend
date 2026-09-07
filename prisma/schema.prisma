@@ -377,6 +377,10 @@ model TipoEntrada {
   nombre        String
   precio        Decimal @db.Decimal(10, 2)
   cantidadTotal Int
+  // Precio especial por combo (ej. 3 entradas por $10.50). Ambos vienen
+  // juntos o ninguno de los dos.
+  precioCombo   Decimal? @db.Decimal(10, 2)
+  cantidadCombo Int?
 
   evento       Evento               @relation(fields: [eventoId], references: [id])
   asignaciones AsignacionEntradas[]
@@ -385,16 +389,22 @@ model TipoEntrada {
 }
 
 model AsignacionEntradas {
-  id                String      @id @default(uuid())
-  tipoEntradaId     String
-  usuarioRegistroId String
-  nombreReferencia  String
-  cantidadAsignada  Int
-  cantidadVendida   Int         @default(0)
-  cantidadDevuelta  Int         @default(0)
-  dineroRecibido    Decimal     @db.Decimal(10, 2) @default(0)
-  metodoPago        MetodoPago?
-  fecha             DateTime    @default(now())
+  id                   String      @id @default(uuid())
+  tipoEntradaId        String
+  usuarioRegistroId    String
+  nombreReferencia     String
+  telefono             String?
+  semestre             String?
+  carrera              String?
+  cantidadAsignada     Int
+  cantidadVendida      Int         @default(0)
+  // Cuantas de las vendidas se vendieron al precio de combo (el resto se
+  // asume vendida al precio individual del tipo de entrada).
+  cantidadVendidaCombo Int         @default(0)
+  cantidadDevuelta     Int         @default(0)
+  dineroRecibido       Decimal     @db.Decimal(10, 2) @default(0)
+  metodoPago           MetodoPago?
+  fecha                DateTime    @default(now())
 
   tipoEntrada TipoEntrada @relation(fields: [tipoEntradaId], references: [id])
 

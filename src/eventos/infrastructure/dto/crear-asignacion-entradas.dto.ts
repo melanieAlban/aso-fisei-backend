@@ -1,4 +1,4 @@
-import { IsInt, IsNotEmpty, IsPositive, IsString, IsUUID } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional, IsPositive, IsString, IsUUID } from 'class-validator';
 
 export class CrearAsignacionEntradasDto {
   @IsUUID()
@@ -11,4 +11,19 @@ export class CrearAsignacionEntradasDto {
   @IsInt()
   @IsPositive()
   cantidadAsignada: number;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  telefono?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  semestre?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  carrera?: string;
 }

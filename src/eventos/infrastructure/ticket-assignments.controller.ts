@@ -18,7 +18,13 @@ export class TicketAssignmentsController {
   actualizar(@Param('id') id: string, @Body() dto: ActualizarAsignacionEntradasDto) {
     return this.actualizarAsignacionEntradasUseCase.ejecutar({
       id,
+      nombreReferencia: dto.nombreReferencia,
+      telefono: dto.telefono,
+      semestre: dto.semestre,
+      carrera: dto.carrera,
+      cantidadAsignada: dto.cantidadAsignada,
       cantidadVendida: dto.cantidadVendida,
+      cantidadVendidaCombo: dto.cantidadVendidaCombo,
       cantidadDevuelta: dto.cantidadDevuelta,
       dineroRecibido: dto.dineroRecibido,
       metodoPago: dto.metodoPago,
