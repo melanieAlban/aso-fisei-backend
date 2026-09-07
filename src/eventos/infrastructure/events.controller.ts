@@ -4,10 +4,12 @@ import { UsuarioAutenticado } from '../../usuarios/infrastructure/auth/jwt-paylo
 import { JwtAuthGuard } from '../../usuarios/infrastructure/auth/jwt-auth.guard';
 import { PermisosGuard } from '../../usuarios/infrastructure/auth/permisos.guard';
 import { RequierePermiso } from '../../usuarios/infrastructure/auth/requiere-permiso.decorator';
+import { AnularEventoUseCase } from '../application/anular-evento.use-case';
 import { CerrarEventoUseCase } from '../application/cerrar-evento.use-case';
 import { CrearAsignacionEntradasUseCase } from '../application/crear-asignacion-entradas.use-case';
 import { CrearEventoUseCase } from '../application/crear-evento.use-case';
 import { CrearTipoEntradaUseCase } from '../application/crear-tipo-entrada.use-case';
+import { EditarEventoUseCase } from '../application/editar-evento.use-case';
 import { ListarAsignacionesUseCase } from '../application/listar-asignaciones.use-case';
 import { ListarEventosUseCase } from '../application/listar-eventos.use-case';
 import { ListarTiposEntradaUseCase } from '../application/listar-tipos-entrada.use-case';
@@ -15,9 +17,11 @@ import { ObtenerEventoUseCase } from '../application/obtener-evento.use-case';
 import { ObtenerResumenEventoUseCase } from '../application/obtener-resumen-evento.use-case';
 import { RegistrarGastoEventoUseCase } from '../application/registrar-gasto-evento.use-case';
 import { RegistrarIngresoEventoUseCase } from '../application/registrar-ingreso-evento.use-case';
+import { AnularEventoDto } from './dto/anular-evento.dto';
 import { CrearAsignacionEntradasDto } from './dto/crear-asignacion-entradas.dto';
 import { CrearEventoDto } from './dto/crear-evento.dto';
 import { CrearTipoEntradaDto } from './dto/crear-tipo-entrada.dto';
+import { EditarEventoDto } from './dto/editar-evento.dto';
 import { ListarEventosQueryDto } from './dto/listar-eventos-query.dto';
 import { RegistrarGastoEventoDto } from './dto/registrar-gasto-evento.dto';
 import { RegistrarIngresoEventoDto } from './dto/registrar-ingreso-evento.dto';
@@ -34,6 +38,8 @@ export class EventsController {
     private readonly listarEventosUseCase: ListarEventosUseCase,
     private readonly obtenerEventoUseCase: ObtenerEventoUseCase,
     private readonly cerrarEventoUseCase: CerrarEventoUseCase,
+    private readonly editarEventoUseCase: EditarEventoUseCase,
+    private readonly anularEventoUseCase: AnularEventoUseCase,
     private readonly obtenerResumenEventoUseCase: ObtenerResumenEventoUseCase,
     private readonly crearTipoEntradaUseCase: CrearTipoEntradaUseCase,
     private readonly listarTiposEntradaUseCase: ListarTiposEntradaUseCase,
@@ -53,6 +59,26 @@ export class EventsController {
       fechaInicio: new Date(dto.fechaInicio),
       fechaFin: dto.fechaFin ? new Date(dto.fechaFin) : undefined,
     });
+  }
+
+  @Patch(':id')
+  @UseGuards(PermisosGuard)
+  @RequierePermiso('eventos.editar')
+  editar(@Param('id') id: string, @Body() dto: EditarEventoDto) {
+    return this.editarEventoUseCase.ejecutar({
+      eventoId: id,
+      nombre: dto.nombre,
+      presupuesto: dto.presupuesto,
+      fechaInicio: dto.fechaInicio ? new Date(dto.fechaInicio) : undefined,
+      fechaFin: dto.fechaFin ? new Date(dto.fechaFin) : undefined,
+    });
+  }
+
+  @Patch(':id/cancel')
+  @UseGuards(PermisosGuard)
+  @RequierePermiso('eventos.anular')
+  anular(@Param('id') id: string, @Body() dto: AnularEventoDto, @Req() req: RequestConUsuario) {
+    return this.anularEventoUseCase.ejecutar({ eventoId: id, usuarioId: req.user.sub, motivo: dto.motivo });
   }
 
   @Get()

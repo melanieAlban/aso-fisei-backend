@@ -1,10 +1,13 @@
 import { Module } from '@nestjs/common';
 import { UsuariosModule } from '../../usuarios/infrastructure/usuarios.module';
+import { AuditoriaContextService } from '../../shared/infraestructure/auditoria/auditoria-context.service';
 import { ActualizarAsignacionEntradasUseCase } from '../application/actualizar-asignacion-entradas.use-case';
+import { AnularEventoUseCase } from '../application/anular-evento.use-case';
 import { CerrarEventoUseCase } from '../application/cerrar-evento.use-case';
 import { CrearAsignacionEntradasUseCase } from '../application/crear-asignacion-entradas.use-case';
 import { CrearEventoUseCase } from '../application/crear-evento.use-case';
 import { CrearTipoEntradaUseCase } from '../application/crear-tipo-entrada.use-case';
+import { EditarEventoUseCase } from '../application/editar-evento.use-case';
 import { ListarAsignacionesUseCase } from '../application/listar-asignaciones.use-case';
 import { ListarEventosUseCase } from '../application/listar-eventos.use-case';
 import { ListarTiposEntradaUseCase } from '../application/listar-tipos-entrada.use-case';
@@ -117,6 +120,18 @@ import { TipoEntradaRepositoryPrisma } from './tipo-entrada.repository.prisma';
       provide: CerrarEventoUseCase,
       useFactory: (transaccion: EventoTransaccionPort) => new CerrarEventoUseCase(transaccion),
       inject: ['EventoTransaccionPort'],
+    },
+    {
+      provide: EditarEventoUseCase,
+      useFactory: (repo: EventoRepository, auditoria: AuditoriaContextService) =>
+        new EditarEventoUseCase(repo, auditoria),
+      inject: ['EventoRepository', AuditoriaContextService],
+    },
+    {
+      provide: AnularEventoUseCase,
+      useFactory: (repo: EventoRepository, auditoria: AuditoriaContextService) =>
+        new AnularEventoUseCase(repo, auditoria),
+      inject: ['EventoRepository', AuditoriaContextService],
     },
   ],
 })

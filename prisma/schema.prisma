@@ -348,13 +348,15 @@ model AbonoDeuda {
 }
 
 model Evento {
-  id          String       @id @default(uuid())
-  nombre      String
-  presupuesto Decimal?     @db.Decimal(10, 2)
-  estado      EstadoEvento @default(ACTIVO)
-  fechaInicio DateTime
-  fechaFin    DateTime?
-  fechaCierre DateTime?
+  id                 String       @id @default(uuid())
+  nombre             String
+  presupuesto        Decimal?     @db.Decimal(10, 2)
+  estado             EstadoEvento @default(ACTIVO)
+  fechaInicio        DateTime
+  fechaFin           DateTime?
+  fechaCierre        DateTime?
+  motivoAnulacion    String?
+  usuarioAnulacionId String?
 
   tiposEntrada TipoEntrada[]
   ingresos     IngresoEvento[]
@@ -366,6 +368,7 @@ model Evento {
 enum EstadoEvento {
   ACTIVO
   CERRADO
+  ANULADO
 }
 
 model TipoEntrada {

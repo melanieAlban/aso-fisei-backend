@@ -24,6 +24,24 @@ export class EventoRepositoryPrisma implements EventoRepository {
     return this.aDominio(creado);
   }
 
+  async guardar(evento: Evento): Promise<Evento> {
+    const actualizado = await this.prisma.evento.update({
+      where: { id: evento.id },
+      data: {
+        nombre: evento.nombre,
+        presupuesto: evento.presupuesto,
+        estado: evento.estado,
+        fechaInicio: evento.fechaInicio,
+        fechaFin: evento.fechaFin,
+        fechaCierre: evento.fechaCierre,
+        motivoAnulacion: evento.motivoAnulacion,
+        usuarioAnulacionId: evento.usuarioAnulacionId,
+      },
+    });
+
+    return this.aDominio(actualizado);
+  }
+
   async buscarPorId(id: string): Promise<Evento | null> {
     const encontrado = await this.prisma.evento.findUnique({ where: { id } });
     return encontrado ? this.aDominio(encontrado) : null;
@@ -51,6 +69,8 @@ export class EventoRepositoryPrisma implements EventoRepository {
       registro.fechaInicio,
       registro.fechaFin,
       registro.fechaCierre,
+      registro.motivoAnulacion,
+      registro.usuarioAnulacionId,
     );
   }
 }
