@@ -10,6 +10,8 @@ import { CrearTipoEntradaUseCase } from '../application/crear-tipo-entrada.use-c
 import { EditarEventoUseCase } from '../application/editar-evento.use-case';
 import { ListarAsignacionesUseCase } from '../application/listar-asignaciones.use-case';
 import { ListarEventosUseCase } from '../application/listar-eventos.use-case';
+import { ListarGastosEventoUseCase } from '../application/listar-gastos-evento.use-case';
+import { ListarIngresosEventoUseCase } from '../application/listar-ingresos-evento.use-case';
 import { ListarTiposEntradaUseCase } from '../application/listar-tipos-entrada.use-case';
 import { ObtenerEventoUseCase } from '../application/obtener-evento.use-case';
 import { ObtenerResumenEventoUseCase } from '../application/obtener-resumen-evento.use-case';
@@ -132,6 +134,16 @@ import { TipoEntradaRepositoryPrisma } from './tipo-entrada.repository.prisma';
       useFactory: (repo: EventoRepository, auditoria: AuditoriaContextService) =>
         new AnularEventoUseCase(repo, auditoria),
       inject: ['EventoRepository', AuditoriaContextService],
+    },
+    {
+      provide: ListarIngresosEventoUseCase,
+      useFactory: (repo: IngresoEventoRepository) => new ListarIngresosEventoUseCase(repo),
+      inject: ['IngresoEventoRepository'],
+    },
+    {
+      provide: ListarGastosEventoUseCase,
+      useFactory: (repo: GastoEventoRepository) => new ListarGastosEventoUseCase(repo),
+      inject: ['GastoEventoRepository'],
     },
   ],
 })
