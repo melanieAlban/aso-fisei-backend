@@ -5,6 +5,8 @@ export interface AsignacionEntradasRepository {
 
   actualizar(asignacion: AsignacionEntradas): Promise<AsignacionEntradas>;
 
+  eliminar(id: string): Promise<void>;
+
   buscarPorId(id: string): Promise<AsignacionEntradas | null>;
 
   listarPorEvento(eventoId: string): Promise<AsignacionEntradas[]>;

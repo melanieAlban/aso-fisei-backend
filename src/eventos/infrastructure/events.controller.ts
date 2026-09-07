@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { Request } from 'express';
 import { UsuarioAutenticado } from '../../usuarios/infrastructure/auth/jwt-payload.interface';
 import { JwtAuthGuard } from '../../usuarios/infrastructure/auth/jwt-auth.guard';
@@ -13,6 +13,9 @@ import { EditarEventoUseCase } from '../application/editar-evento.use-case';
 import { EditarGastoEventoUseCase } from '../application/editar-gasto-evento.use-case';
 import { EditarIngresoEventoUseCase } from '../application/editar-ingreso-evento.use-case';
 import { EditarTipoEntradaUseCase } from '../application/editar-tipo-entrada.use-case';
+import { EliminarGastoEventoUseCase } from '../application/eliminar-gasto-evento.use-case';
+import { EliminarIngresoEventoUseCase } from '../application/eliminar-ingreso-evento.use-case';
+import { EliminarTipoEntradaUseCase } from '../application/eliminar-tipo-entrada.use-case';
 import { ListarAsignacionesUseCase } from '../application/listar-asignaciones.use-case';
 import { ListarEventosUseCase } from '../application/listar-eventos.use-case';
 import { ListarGastosEventoUseCase } from '../application/listar-gastos-evento.use-case';
@@ -60,6 +63,9 @@ export class EventsController {
     private readonly editarTipoEntradaUseCase: EditarTipoEntradaUseCase,
     private readonly editarIngresoEventoUseCase: EditarIngresoEventoUseCase,
     private readonly editarGastoEventoUseCase: EditarGastoEventoUseCase,
+    private readonly eliminarTipoEntradaUseCase: EliminarTipoEntradaUseCase,
+    private readonly eliminarIngresoEventoUseCase: EliminarIngresoEventoUseCase,
+    private readonly eliminarGastoEventoUseCase: EliminarGastoEventoUseCase,
   ) {}
 
   @Post()
@@ -149,6 +155,13 @@ export class EventsController {
     });
   }
 
+  @Delete(':id/ticket-types/:tipoId')
+  @UseGuards(PermisosGuard)
+  @RequierePermiso('eventos.crear')
+  eliminarTipoEntrada(@Param('tipoId') tipoId: string) {
+    return this.eliminarTipoEntradaUseCase.ejecutar(tipoId);
+  }
+
   @Post(':id/ticket-assignments')
   @UseGuards(PermisosGuard)
   @RequierePermiso('eventos.gestionar_entradas')
@@ -212,6 +225,13 @@ export class EventsController {
     });
   }
 
+  @Delete(':id/income/:incomeId')
+  @UseGuards(PermisosGuard)
+  @RequierePermiso('eventos.registrar_movimiento')
+  eliminarIngreso(@Param('incomeId') incomeId: string) {
+    return this.eliminarIngresoEventoUseCase.ejecutar(incomeId);
+  }
+
   @Post(':id/expenses')
   @UseGuards(PermisosGuard)
   @RequierePermiso('eventos.registrar_movimiento')
@@ -239,5 +259,12 @@ export class EventsController {
       monto: dto.monto,
       metodoPago: dto.metodoPago,
     });
+  }
+
+  @Delete(':id/expenses/:expenseId')
+  @UseGuards(PermisosGuard)
+  @RequierePermiso('eventos.registrar_movimiento')
+  eliminarGasto(@Param('expenseId') expenseId: string) {
+    return this.eliminarGastoEventoUseCase.ejecutar(expenseId);
   }
 }

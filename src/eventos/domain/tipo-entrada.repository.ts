@@ -5,6 +5,8 @@ export interface TipoEntradaRepository {
 
   guardar(tipoEntrada: TipoEntrada): Promise<TipoEntrada>;
 
+  eliminar(id: string): Promise<void>;
+
   buscarPorId(id: string): Promise<TipoEntrada | null>;
 
   listarPorEvento(eventoId: string): Promise<TipoEntrada[]>;

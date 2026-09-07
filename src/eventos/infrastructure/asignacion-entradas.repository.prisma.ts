@@ -51,6 +51,10 @@ export class AsignacionEntradasRepositoryPrisma implements AsignacionEntradasRep
     return this.aDominio(actualizado);
   }
 
+  async eliminar(id: string): Promise<void> {
+    await this.prisma.asignacionEntradas.delete({ where: { id } });
+  }
+
   async buscarPorId(id: string): Promise<AsignacionEntradas | null> {
     const encontrado = await this.prisma.asignacionEntradas.findUnique({ where: { id } });
     return encontrado ? this.aDominio(encontrado) : null;

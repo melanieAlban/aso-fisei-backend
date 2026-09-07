@@ -1,8 +1,9 @@
-import { Body, Controller, Param, Patch, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Param, Patch, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../usuarios/infrastructure/auth/jwt-auth.guard';
 import { PermisosGuard } from '../../usuarios/infrastructure/auth/permisos.guard';
 import { RequierePermiso } from '../../usuarios/infrastructure/auth/requiere-permiso.decorator';
 import { ActualizarAsignacionEntradasUseCase } from '../application/actualizar-asignacion-entradas.use-case';
+import { EliminarAsignacionEntradasUseCase } from '../application/eliminar-asignacion-entradas.use-case';
 import { ActualizarAsignacionEntradasDto } from './dto/actualizar-asignacion-entradas.dto';
 
 @Controller('ticket-assignments')
@@ -10,6 +11,7 @@ import { ActualizarAsignacionEntradasDto } from './dto/actualizar-asignacion-ent
 export class TicketAssignmentsController {
   constructor(
     private readonly actualizarAsignacionEntradasUseCase: ActualizarAsignacionEntradasUseCase,
+    private readonly eliminarAsignacionEntradasUseCase: EliminarAsignacionEntradasUseCase,
   ) {}
 
   @Patch(':id')
@@ -29,5 +31,12 @@ export class TicketAssignmentsController {
       dineroRecibido: dto.dineroRecibido,
       metodoPago: dto.metodoPago,
     });
+  }
+
+  @Delete(':id')
+  @UseGuards(PermisosGuard)
+  @RequierePermiso('eventos.gestionar_entradas')
+  eliminar(@Param('id') id: string) {
+    return this.eliminarAsignacionEntradasUseCase.ejecutar(id);
   }
 }

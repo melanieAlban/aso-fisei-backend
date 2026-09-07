@@ -11,6 +11,10 @@ import { EditarEventoUseCase } from '../application/editar-evento.use-case';
 import { EditarGastoEventoUseCase } from '../application/editar-gasto-evento.use-case';
 import { EditarIngresoEventoUseCase } from '../application/editar-ingreso-evento.use-case';
 import { EditarTipoEntradaUseCase } from '../application/editar-tipo-entrada.use-case';
+import { EliminarAsignacionEntradasUseCase } from '../application/eliminar-asignacion-entradas.use-case';
+import { EliminarGastoEventoUseCase } from '../application/eliminar-gasto-evento.use-case';
+import { EliminarIngresoEventoUseCase } from '../application/eliminar-ingreso-evento.use-case';
+import { EliminarTipoEntradaUseCase } from '../application/eliminar-tipo-entrada.use-case';
 import { ListarAsignacionesUseCase } from '../application/listar-asignaciones.use-case';
 import { ListarEventosUseCase } from '../application/listar-eventos.use-case';
 import { ListarGastosEventoUseCase } from '../application/listar-gastos-evento.use-case';
@@ -164,6 +168,33 @@ import { TipoEntradaRepositoryPrisma } from './tipo-entrada.repository.prisma';
       provide: EditarGastoEventoUseCase,
       useFactory: (gastoRepo: GastoEventoRepository, eventoRepo: EventoRepository) =>
         new EditarGastoEventoUseCase(gastoRepo, eventoRepo),
+      inject: ['GastoEventoRepository', 'EventoRepository'],
+    },
+    {
+      provide: EliminarTipoEntradaUseCase,
+      useFactory: (tipoRepo: TipoEntradaRepository, eventoRepo: EventoRepository) =>
+        new EliminarTipoEntradaUseCase(tipoRepo, eventoRepo),
+      inject: ['TipoEntradaRepository', 'EventoRepository'],
+    },
+    {
+      provide: EliminarAsignacionEntradasUseCase,
+      useFactory: (
+        asignacionRepo: AsignacionEntradasRepository,
+        tipoRepo: TipoEntradaRepository,
+        eventoRepo: EventoRepository,
+      ) => new EliminarAsignacionEntradasUseCase(asignacionRepo, tipoRepo, eventoRepo),
+      inject: ['AsignacionEntradasRepository', 'TipoEntradaRepository', 'EventoRepository'],
+    },
+    {
+      provide: EliminarIngresoEventoUseCase,
+      useFactory: (ingresoRepo: IngresoEventoRepository, eventoRepo: EventoRepository) =>
+        new EliminarIngresoEventoUseCase(ingresoRepo, eventoRepo),
+      inject: ['IngresoEventoRepository', 'EventoRepository'],
+    },
+    {
+      provide: EliminarGastoEventoUseCase,
+      useFactory: (gastoRepo: GastoEventoRepository, eventoRepo: EventoRepository) =>
+        new EliminarGastoEventoUseCase(gastoRepo, eventoRepo),
       inject: ['GastoEventoRepository', 'EventoRepository'],
     },
   ],

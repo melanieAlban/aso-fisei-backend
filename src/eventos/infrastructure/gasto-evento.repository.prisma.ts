@@ -37,6 +37,10 @@ export class GastoEventoRepositoryPrisma implements GastoEventoRepository {
     return this.aDominio(actualizado);
   }
 
+  async eliminar(id: string): Promise<void> {
+    await this.prisma.gastoEvento.delete({ where: { id } });
+  }
+
   async buscarPorId(id: string): Promise<GastoEvento | null> {
     const encontrado = await this.prisma.gastoEvento.findUnique({ where: { id } });
     return encontrado ? this.aDominio(encontrado) : null;

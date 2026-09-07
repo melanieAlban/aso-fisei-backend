@@ -5,6 +5,8 @@ export interface IngresoEventoRepository {
 
   guardar(ingreso: IngresoEvento): Promise<IngresoEvento>;
 
+  eliminar(id: string): Promise<void>;
+
   buscarPorId(id: string): Promise<IngresoEvento | null>;
 
   listarPorEvento(eventoId: string): Promise<IngresoEvento[]>;

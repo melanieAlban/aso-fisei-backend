@@ -37,6 +37,10 @@ export class IngresoEventoRepositoryPrisma implements IngresoEventoRepository {
     return this.aDominio(actualizado);
   }
 
+  async eliminar(id: string): Promise<void> {
+    await this.prisma.ingresoEvento.delete({ where: { id } });
+  }
+
   async buscarPorId(id: string): Promise<IngresoEvento | null> {
     const encontrado = await this.prisma.ingresoEvento.findUnique({ where: { id } });
     return encontrado ? this.aDominio(encontrado) : null;

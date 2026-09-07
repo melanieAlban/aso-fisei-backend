@@ -39,6 +39,10 @@ export class TipoEntradaRepositoryPrisma implements TipoEntradaRepository {
     return this.aDominio(actualizado);
   }
 
+  async eliminar(id: string): Promise<void> {
+    await this.prisma.tipoEntrada.delete({ where: { id } });
+  }
+
   async buscarPorId(id: string): Promise<TipoEntrada | null> {
     const encontrado = await this.prisma.tipoEntrada.findUnique({ where: { id } });
     return encontrado ? this.aDominio(encontrado) : null;

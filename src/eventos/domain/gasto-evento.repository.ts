@@ -5,6 +5,8 @@ export interface GastoEventoRepository {
 
   guardar(gasto: GastoEvento): Promise<GastoEvento>;
 
+  eliminar(id: string): Promise<void>;
+
   buscarPorId(id: string): Promise<GastoEvento | null>;
 
   listarPorEvento(eventoId: string): Promise<GastoEvento[]>;
