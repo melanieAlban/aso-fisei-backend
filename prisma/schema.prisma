@@ -459,3 +459,17 @@ model GastoEvento {
 
   @@map("gastos_evento")
 }
+
+// Temporizadores visuales compartidos (ej. alquiler de la billa): cualquier
+// usuario logueado los ve mientras estan activos. No mueven dinero ni
+// afectan ninguna otra tabla — son solo informativos.
+model TemporizadorActivo {
+  id         String   @id @default(uuid())
+  nombre     String
+  horaInicio DateTime
+  horaFin    DateTime
+  usuarioId  String
+  fecha      DateTime @default(now())
+
+  @@map("temporizadores_activos")
+}

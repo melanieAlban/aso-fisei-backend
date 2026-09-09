@@ -16,6 +16,7 @@ import { DeudasModule } from './deudas/infrastructure/deudas.module';
 import { EventosModule } from './eventos/infrastructure/eventos.module';
 import { GastosModule } from './gastos/infrastructure/gastos.module';
 import { InventarioModule } from './inventario/infrastructure/inventario.module';
+import { TemporizadoresModule } from './temporizadores/infrastructure/temporizadores.module';
 import { UsuariosModule } from './usuarios/infrastructure/usuarios.module';
 
 @Module({
@@ -31,6 +32,7 @@ import { UsuariosModule } from './usuarios/infrastructure/usuarios.module';
     DashboardModule,
     AuditoriaModule,
     EventosModule,
+    TemporizadoresModule,
   ],
   controllers: [AppController],
   providers: [
