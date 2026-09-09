@@ -382,8 +382,9 @@ model TipoEntrada {
   precioCombo   Decimal? @db.Decimal(10, 2)
   cantidadCombo Int?
 
-  evento       Evento               @relation(fields: [eventoId], references: [id])
-  asignaciones AsignacionEntradas[]
+  evento        Evento               @relation(fields: [eventoId], references: [id])
+  asignaciones  AsignacionEntradas[]
+  ventasDirectas VentaEntrada[]
 
   @@map("tipos_entrada")
 }
@@ -409,6 +410,26 @@ model AsignacionEntradas {
   tipoEntrada TipoEntrada @relation(fields: [tipoEntradaId], references: [id])
 
   @@map("asignaciones_entradas")
+}
+
+// Venta directa de una entrada por un vendedor, a diferencia de
+// AsignacionEntradas (un lote entregado a un tercero que revende por su
+// cuenta). El dinero de estas ventas queda dentro del resumen del evento,
+// igual que los ingresos manuales, hasta que el evento se cierra.
+model VentaEntrada {
+  id            String     @id @default(uuid())
+  tipoEntradaId String
+  usuarioId     String
+  cantidad      Int
+  // Cuantas de las vendidas en esta transaccion fueron por precio de combo.
+  cantidadCombo Int        @default(0)
+  monto         Decimal    @db.Decimal(10, 2)
+  metodoPago    MetodoPago
+  fecha         DateTime   @default(now())
+
+  tipoEntrada TipoEntrada @relation(fields: [tipoEntradaId], references: [id])
+
+  @@map("ventas_entrada")
 }
 
 model IngresoEvento {

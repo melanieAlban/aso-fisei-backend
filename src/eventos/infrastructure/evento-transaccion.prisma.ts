@@ -40,6 +40,11 @@ export class EventoTransaccionPrisma implements EventoTransaccionPort {
         where: { tipoEntrada: { eventoId: datos.eventoId } },
         _sum: { dineroRecibido: true },
       });
+      const ingresosVentaDirecta = await tx.ventaEntrada.groupBy({
+        by: ['metodoPago'],
+        where: { tipoEntrada: { eventoId: datos.eventoId } },
+        _sum: { monto: true },
+      });
 
       const sumarMonto = (
         grupos: { metodoPago: MetodoPago | null; _sum: { monto: Prisma.Decimal | null } }[],
@@ -52,9 +57,13 @@ export class EventoTransaccionPrisma implements EventoTransaccionPort {
       ): number => grupos.find((g) => g.metodoPago === metodo)?._sum.dineroRecibido?.toNumber() ?? 0;
 
       const ingresosEfectivo =
-        sumarMonto(ingresosManuales, 'EFECTIVO') + sumarDinero(ingresosEntradas, 'EFECTIVO');
+        sumarMonto(ingresosManuales, 'EFECTIVO') +
+        sumarDinero(ingresosEntradas, 'EFECTIVO') +
+        sumarMonto(ingresosVentaDirecta, 'EFECTIVO');
       const ingresosTransferencia =
-        sumarMonto(ingresosManuales, 'TRANSFERENCIA') + sumarDinero(ingresosEntradas, 'TRANSFERENCIA');
+        sumarMonto(ingresosManuales, 'TRANSFERENCIA') +
+        sumarDinero(ingresosEntradas, 'TRANSFERENCIA') +
+        sumarMonto(ingresosVentaDirecta, 'TRANSFERENCIA');
       const gastosEfectivo = sumarMonto(gastosManuales, 'EFECTIVO');
       const gastosTransferencia = sumarMonto(gastosManuales, 'TRANSFERENCIA');
 

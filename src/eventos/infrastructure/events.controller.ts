@@ -16,15 +16,19 @@ import { EditarTipoEntradaUseCase } from '../application/editar-tipo-entrada.use
 import { EliminarGastoEventoUseCase } from '../application/eliminar-gasto-evento.use-case';
 import { EliminarIngresoEventoUseCase } from '../application/eliminar-ingreso-evento.use-case';
 import { EliminarTipoEntradaUseCase } from '../application/eliminar-tipo-entrada.use-case';
+import { EliminarVentaEntradaUseCase } from '../application/eliminar-venta-entrada.use-case';
 import { ListarAsignacionesUseCase } from '../application/listar-asignaciones.use-case';
 import { ListarEventosUseCase } from '../application/listar-eventos.use-case';
 import { ListarGastosEventoUseCase } from '../application/listar-gastos-evento.use-case';
 import { ListarIngresosEventoUseCase } from '../application/listar-ingresos-evento.use-case';
 import { ListarTiposEntradaUseCase } from '../application/listar-tipos-entrada.use-case';
+import { ListarVentasEntradaUseCase } from '../application/listar-ventas-entrada.use-case';
+import { ObtenerDisponibilidadEntradasUseCase } from '../application/obtener-disponibilidad-entradas.use-case';
 import { ObtenerEventoUseCase } from '../application/obtener-evento.use-case';
 import { ObtenerResumenEventoUseCase } from '../application/obtener-resumen-evento.use-case';
 import { RegistrarGastoEventoUseCase } from '../application/registrar-gasto-evento.use-case';
 import { RegistrarIngresoEventoUseCase } from '../application/registrar-ingreso-evento.use-case';
+import { RegistrarVentaEntradaUseCase } from '../application/registrar-venta-entrada.use-case';
 import { AnularEventoDto } from './dto/anular-evento.dto';
 import { CrearAsignacionEntradasDto } from './dto/crear-asignacion-entradas.dto';
 import { CrearEventoDto } from './dto/crear-evento.dto';
@@ -36,6 +40,7 @@ import { EditarTipoEntradaDto } from './dto/editar-tipo-entrada.dto';
 import { ListarEventosQueryDto } from './dto/listar-eventos-query.dto';
 import { RegistrarGastoEventoDto } from './dto/registrar-gasto-evento.dto';
 import { RegistrarIngresoEventoDto } from './dto/registrar-ingreso-evento.dto';
+import { RegistrarVentaEntradaDto } from './dto/registrar-venta-entrada.dto';
 
 interface RequestConUsuario extends Request {
   user: UsuarioAutenticado;
@@ -66,6 +71,10 @@ export class EventsController {
     private readonly eliminarTipoEntradaUseCase: EliminarTipoEntradaUseCase,
     private readonly eliminarIngresoEventoUseCase: EliminarIngresoEventoUseCase,
     private readonly eliminarGastoEventoUseCase: EliminarGastoEventoUseCase,
+    private readonly registrarVentaEntradaUseCase: RegistrarVentaEntradaUseCase,
+    private readonly listarVentasEntradaUseCase: ListarVentasEntradaUseCase,
+    private readonly eliminarVentaEntradaUseCase: EliminarVentaEntradaUseCase,
+    private readonly obtenerDisponibilidadEntradasUseCase: ObtenerDisponibilidadEntradasUseCase,
   ) {}
 
   @Post()
@@ -184,6 +193,40 @@ export class EventsController {
   @Get(':id/ticket-assignments')
   listarAsignaciones(@Param('id') id: string) {
     return this.listarAsignacionesUseCase.ejecutar(id);
+  }
+
+  @Get(':id/ticket-availability')
+  obtenerDisponibilidad(@Param('id') id: string) {
+    return this.obtenerDisponibilidadEntradasUseCase.ejecutar(id);
+  }
+
+  @Post(':id/ticket-types/:tipoId/sales')
+  @UseGuards(PermisosGuard)
+  @RequierePermiso('ventas.vender_entradas')
+  registrarVentaEntrada(
+    @Param('tipoId') tipoId: string,
+    @Body() dto: RegistrarVentaEntradaDto,
+    @Req() req: RequestConUsuario,
+  ) {
+    return this.registrarVentaEntradaUseCase.ejecutar({
+      tipoEntradaId: tipoId,
+      usuarioId: req.user.sub,
+      cantidad: dto.cantidad,
+      esCombo: dto.esCombo,
+      metodoPago: dto.metodoPago,
+    });
+  }
+
+  @Get(':id/ticket-sales')
+  listarVentasEntrada(@Param('id') id: string) {
+    return this.listarVentasEntradaUseCase.ejecutar(id);
+  }
+
+  @Delete(':id/ticket-sales/:ventaId')
+  @UseGuards(PermisosGuard)
+  @RequierePermiso('ventas.vender_entradas')
+  eliminarVentaEntrada(@Param('ventaId') ventaId: string) {
+    return this.eliminarVentaEntradaUseCase.ejecutar(ventaId);
   }
 
   @Get(':id/income')

@@ -15,21 +15,26 @@ import { EliminarAsignacionEntradasUseCase } from '../application/eliminar-asign
 import { EliminarGastoEventoUseCase } from '../application/eliminar-gasto-evento.use-case';
 import { EliminarIngresoEventoUseCase } from '../application/eliminar-ingreso-evento.use-case';
 import { EliminarTipoEntradaUseCase } from '../application/eliminar-tipo-entrada.use-case';
+import { EliminarVentaEntradaUseCase } from '../application/eliminar-venta-entrada.use-case';
 import { ListarAsignacionesUseCase } from '../application/listar-asignaciones.use-case';
 import { ListarEventosUseCase } from '../application/listar-eventos.use-case';
 import { ListarGastosEventoUseCase } from '../application/listar-gastos-evento.use-case';
 import { ListarIngresosEventoUseCase } from '../application/listar-ingresos-evento.use-case';
 import { ListarTiposEntradaUseCase } from '../application/listar-tipos-entrada.use-case';
+import { ListarVentasEntradaUseCase } from '../application/listar-ventas-entrada.use-case';
+import { ObtenerDisponibilidadEntradasUseCase } from '../application/obtener-disponibilidad-entradas.use-case';
 import { ObtenerEventoUseCase } from '../application/obtener-evento.use-case';
 import { ObtenerResumenEventoUseCase } from '../application/obtener-resumen-evento.use-case';
 import { EventoTransaccionPort } from '../application/ports/evento-transaccion.port';
 import { RegistrarGastoEventoUseCase } from '../application/registrar-gasto-evento.use-case';
 import { RegistrarIngresoEventoUseCase } from '../application/registrar-ingreso-evento.use-case';
+import { RegistrarVentaEntradaUseCase } from '../application/registrar-venta-entrada.use-case';
 import { AsignacionEntradasRepository } from '../domain/asignacion-entradas.repository';
 import { EventoRepository } from '../domain/evento.repository';
 import { GastoEventoRepository } from '../domain/gasto-evento.repository';
 import { IngresoEventoRepository } from '../domain/ingreso-evento.repository';
 import { TipoEntradaRepository } from '../domain/tipo-entrada.repository';
+import { VentaEntradaRepository } from '../domain/venta-entrada.repository';
 import { AsignacionEntradasRepositoryPrisma } from './asignacion-entradas.repository.prisma';
 import { EventoRepositoryPrisma } from './evento.repository.prisma';
 import { EventoTransaccionPrisma } from './evento-transaccion.prisma';
@@ -38,6 +43,7 @@ import { GastoEventoRepositoryPrisma } from './gasto-evento.repository.prisma';
 import { IngresoEventoRepositoryPrisma } from './ingreso-evento.repository.prisma';
 import { TicketAssignmentsController } from './ticket-assignments.controller';
 import { TipoEntradaRepositoryPrisma } from './tipo-entrada.repository.prisma';
+import { VentaEntradaRepositoryPrisma } from './venta-entrada.repository.prisma';
 
 @Module({
   imports: [UsuariosModule],
@@ -48,6 +54,7 @@ import { TipoEntradaRepositoryPrisma } from './tipo-entrada.repository.prisma';
     { provide: 'AsignacionEntradasRepository', useClass: AsignacionEntradasRepositoryPrisma },
     { provide: 'IngresoEventoRepository', useClass: IngresoEventoRepositoryPrisma },
     { provide: 'GastoEventoRepository', useClass: GastoEventoRepositoryPrisma },
+    { provide: 'VentaEntradaRepository', useClass: VentaEntradaRepositoryPrisma },
     { provide: 'EventoTransaccionPort', useClass: EventoTransaccionPrisma },
     {
       provide: CrearEventoUseCase,
@@ -117,12 +124,15 @@ import { TipoEntradaRepositoryPrisma } from './tipo-entrada.repository.prisma';
         ingresoRepo: IngresoEventoRepository,
         gastoRepo: GastoEventoRepository,
         asignacionRepo: AsignacionEntradasRepository,
-      ) => new ObtenerResumenEventoUseCase(eventoRepo, ingresoRepo, gastoRepo, asignacionRepo),
+        ventaEntradaRepo: VentaEntradaRepository,
+      ) =>
+        new ObtenerResumenEventoUseCase(eventoRepo, ingresoRepo, gastoRepo, asignacionRepo, ventaEntradaRepo),
       inject: [
         'EventoRepository',
         'IngresoEventoRepository',
         'GastoEventoRepository',
         'AsignacionEntradasRepository',
+        'VentaEntradaRepository',
       ],
     },
     {
@@ -196,6 +206,44 @@ import { TipoEntradaRepositoryPrisma } from './tipo-entrada.repository.prisma';
       useFactory: (gastoRepo: GastoEventoRepository, eventoRepo: EventoRepository) =>
         new EliminarGastoEventoUseCase(gastoRepo, eventoRepo),
       inject: ['GastoEventoRepository', 'EventoRepository'],
+    },
+    {
+      provide: RegistrarVentaEntradaUseCase,
+      useFactory: (
+        ventaRepo: VentaEntradaRepository,
+        tipoRepo: TipoEntradaRepository,
+        asignacionRepo: AsignacionEntradasRepository,
+        eventoRepo: EventoRepository,
+      ) => new RegistrarVentaEntradaUseCase(ventaRepo, tipoRepo, asignacionRepo, eventoRepo),
+      inject: [
+        'VentaEntradaRepository',
+        'TipoEntradaRepository',
+        'AsignacionEntradasRepository',
+        'EventoRepository',
+      ],
+    },
+    {
+      provide: ListarVentasEntradaUseCase,
+      useFactory: (repo: VentaEntradaRepository) => new ListarVentasEntradaUseCase(repo),
+      inject: ['VentaEntradaRepository'],
+    },
+    {
+      provide: EliminarVentaEntradaUseCase,
+      useFactory: (
+        ventaRepo: VentaEntradaRepository,
+        tipoRepo: TipoEntradaRepository,
+        eventoRepo: EventoRepository,
+      ) => new EliminarVentaEntradaUseCase(ventaRepo, tipoRepo, eventoRepo),
+      inject: ['VentaEntradaRepository', 'TipoEntradaRepository', 'EventoRepository'],
+    },
+    {
+      provide: ObtenerDisponibilidadEntradasUseCase,
+      useFactory: (
+        tipoRepo: TipoEntradaRepository,
+        asignacionRepo: AsignacionEntradasRepository,
+        ventaRepo: VentaEntradaRepository,
+      ) => new ObtenerDisponibilidadEntradasUseCase(tipoRepo, asignacionRepo, ventaRepo),
+      inject: ['TipoEntradaRepository', 'AsignacionEntradasRepository', 'VentaEntradaRepository'],
     },
   ],
 })
