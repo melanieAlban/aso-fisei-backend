@@ -140,6 +140,6 @@ import { UsuariosController } from './usuarios.controller';
       inject: ['PermisoRepository'],
     },
   ],
-  exports: [JwtAuthGuard, PermisosGuard, 'PermisosUsuarioRepository'],
+  exports: [JwtAuthGuard, PermisosGuard, 'PermisosUsuarioRepository', 'UsuarioRepository'],
 })
 export class UsuariosModule {}

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { UsuarioRepository } from '../../usuarios/domain/usuario.repository';
 import { UsuariosModule } from '../../usuarios/infrastructure/usuarios.module';
 import { AuditoriaContextService } from '../../shared/infraestructure/auditoria/auditoria-context.service';
 import { ActualizarAsignacionEntradasUseCase } from '../application/actualizar-asignacion-entradas.use-case';
@@ -224,8 +225,9 @@ import { VentaEntradaRepositoryPrisma } from './venta-entrada.repository.prisma'
     },
     {
       provide: ListarVentasEntradaUseCase,
-      useFactory: (repo: VentaEntradaRepository) => new ListarVentasEntradaUseCase(repo),
-      inject: ['VentaEntradaRepository'],
+      useFactory: (repo: VentaEntradaRepository, usuarioRepo: UsuarioRepository) =>
+        new ListarVentasEntradaUseCase(repo, usuarioRepo),
+      inject: ['VentaEntradaRepository', 'UsuarioRepository'],
     },
     {
       provide: EliminarVentaEntradaUseCase,
