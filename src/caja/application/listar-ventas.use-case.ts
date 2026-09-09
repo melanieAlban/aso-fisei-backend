@@ -14,6 +14,7 @@ export class ListarVentasUseCase {
   async ejecutar(datos: {
     desde?: Date;
     hasta?: Date;
+    usuarioId?: string;
     page?: number;
     limit?: number;
   }): Promise<{ ventas: VentaConDetalleYVendedor[]; total: number; page: number; limit: number }> {
@@ -21,7 +22,7 @@ export class ListarVentasUseCase {
     const limit = datos.limit && datos.limit > 0 ? datos.limit : 20;
 
     const { ventas, total } = await this.ventaRepository.listarTodos(
-      { desde: datos.desde, hasta: datos.hasta },
+      { desde: datos.desde, hasta: datos.hasta, usuarioId: datos.usuarioId },
       page,
       limit,
     );

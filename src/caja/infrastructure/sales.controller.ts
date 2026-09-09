@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { Request } from 'express';
+import { UsuarioRolRepository } from '../../usuarios/domain/usuario-rol.repository';
 import { JwtAuthGuard } from '../../usuarios/infrastructure/auth/jwt-auth.guard';
 import { UsuarioAutenticado } from '../../usuarios/infrastructure/auth/jwt-payload.interface';
 import { PermisosGuard } from '../../usuarios/infrastructure/auth/permisos.guard';
@@ -26,6 +27,8 @@ export class SalesController {
     private readonly obtenerVentaUseCase: ObtenerVentaUseCase,
     private readonly anularItemVentaUseCase: AnularItemVentaUseCase,
     private readonly devolverAlquilerUseCase: DevolverAlquilerUseCase,
+    @Inject('UsuarioRolRepository')
+    private readonly usuarioRolRepository: UsuarioRolRepository,
   ) {}
 
   @Post()
@@ -43,10 +46,15 @@ export class SalesController {
   @Get()
   @UseGuards(PermisosGuard)
   @RequierePermiso('ventas.listar')
-  listar(@Query() query: ListarVentasQueryDto) {
+  async listar(@Query() query: ListarVentasQueryDto, @Req() req: RequestConUsuario) {
+    const roles = await this.usuarioRolRepository.listarNombresRolesPorUsuario(req.user.sub);
+    const esAdmin = roles.includes('Admin');
+
     return this.listarVentasUseCase.ejecutar({
       desde: query.from ? new Date(query.from) : undefined,
       hasta: query.to ? new Date(query.to) : undefined,
+      // Un vendedor solo ve sus propias ventas; un admin ve las de todos.
+      usuarioId: esAdmin ? undefined : req.user.sub,
       page: query.page,
       limit: query.limit,
     });

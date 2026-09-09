@@ -112,15 +112,16 @@ export class VentaRepositoryPrisma implements VentaRepository {
   }
 
   private construirFiltroFecha(filtros: FiltrosVentas): Prisma.VentaWhereInput {
-    if (!filtros.desde && !filtros.hasta) {
-      return {};
-    }
-
     return {
-      fecha: {
-        ...(filtros.desde ? { gte: filtros.desde } : {}),
-        ...(filtros.hasta ? { lte: filtros.hasta } : {}),
-      },
+      ...(filtros.usuarioId ? { usuarioId: filtros.usuarioId } : {}),
+      ...(filtros.desde || filtros.hasta
+        ? {
+            fecha: {
+              ...(filtros.desde ? { gte: filtros.desde } : {}),
+              ...(filtros.hasta ? { lte: filtros.hasta } : {}),
+            },
+          }
+        : {}),
     };
   }
 

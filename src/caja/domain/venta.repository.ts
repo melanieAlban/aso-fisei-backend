@@ -4,6 +4,7 @@ import { Venta } from './venta.entity';
 export interface FiltrosVentas {
   desde?: Date;
   hasta?: Date;
+  usuarioId?: string;
 }
 
 export interface VentaConDetalle {
