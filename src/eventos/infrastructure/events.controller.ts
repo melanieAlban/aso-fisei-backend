@@ -7,6 +7,7 @@ import { RequierePermiso } from '../../usuarios/infrastructure/auth/requiere-per
 import { AnularEventoUseCase } from '../application/anular-evento.use-case';
 import { CerrarEventoUseCase } from '../application/cerrar-evento.use-case';
 import { CrearAsignacionEntradasUseCase } from '../application/crear-asignacion-entradas.use-case';
+import { CrearCompromisoPagoUseCase } from '../application/crear-compromiso-pago.use-case';
 import { CrearEventoUseCase } from '../application/crear-evento.use-case';
 import { CrearTipoEntradaUseCase } from '../application/crear-tipo-entrada.use-case';
 import { EditarEventoUseCase } from '../application/editar-evento.use-case';
@@ -18,6 +19,7 @@ import { EliminarIngresoEventoUseCase } from '../application/eliminar-ingreso-ev
 import { EliminarTipoEntradaUseCase } from '../application/eliminar-tipo-entrada.use-case';
 import { EliminarVentaEntradaUseCase } from '../application/eliminar-venta-entrada.use-case';
 import { ListarAsignacionesUseCase } from '../application/listar-asignaciones.use-case';
+import { ListarCompromisosPagoUseCase } from '../application/listar-compromisos-pago.use-case';
 import { ListarEventosUseCase } from '../application/listar-eventos.use-case';
 import { ListarGastosEventoUseCase } from '../application/listar-gastos-evento.use-case';
 import { ListarIngresosEventoUseCase } from '../application/listar-ingresos-evento.use-case';
@@ -31,6 +33,7 @@ import { RegistrarIngresoEventoUseCase } from '../application/registrar-ingreso-
 import { RegistrarVentaEntradaUseCase } from '../application/registrar-venta-entrada.use-case';
 import { AnularEventoDto } from './dto/anular-evento.dto';
 import { CrearAsignacionEntradasDto } from './dto/crear-asignacion-entradas.dto';
+import { CrearCompromisoPagoDto } from './dto/crear-compromiso-pago.dto';
 import { CrearEventoDto } from './dto/crear-evento.dto';
 import { CrearTipoEntradaDto } from './dto/crear-tipo-entrada.dto';
 import { EditarEventoDto } from './dto/editar-evento.dto';
@@ -75,6 +78,8 @@ export class EventsController {
     private readonly listarVentasEntradaUseCase: ListarVentasEntradaUseCase,
     private readonly eliminarVentaEntradaUseCase: EliminarVentaEntradaUseCase,
     private readonly obtenerDisponibilidadEntradasUseCase: ObtenerDisponibilidadEntradasUseCase,
+    private readonly crearCompromisoPagoUseCase: CrearCompromisoPagoUseCase,
+    private readonly listarCompromisosPagoUseCase: ListarCompromisosPagoUseCase,
   ) {}
 
   @Post()
@@ -309,5 +314,22 @@ export class EventsController {
   @RequierePermiso('eventos.registrar_movimiento')
   eliminarGasto(@Param('expenseId') expenseId: string) {
     return this.eliminarGastoEventoUseCase.ejecutar(expenseId);
+  }
+
+  @Post(':id/payment-commitments')
+  @UseGuards(PermisosGuard)
+  @RequierePermiso('eventos.registrar_movimiento')
+  crearCompromisoPago(@Param('id') id: string, @Body() dto: CrearCompromisoPagoDto) {
+    return this.crearCompromisoPagoUseCase.ejecutar({
+      eventoId: id,
+      descripcion: dto.descripcion,
+      montoTotal: dto.montoTotal,
+      montoPagadoInicial: dto.montoPagadoInicial,
+    });
+  }
+
+  @Get(':id/payment-commitments')
+  listarCompromisosPago(@Param('id') id: string) {
+    return this.listarCompromisosPagoUseCase.ejecutar(id);
   }
 }
