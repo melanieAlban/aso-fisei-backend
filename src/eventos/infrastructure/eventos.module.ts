@@ -6,6 +6,7 @@ import { ActualizarAsignacionEntradasUseCase } from '../application/actualizar-a
 import { AnularEventoUseCase } from '../application/anular-evento.use-case';
 import { CerrarEventoUseCase } from '../application/cerrar-evento.use-case';
 import { CrearAsignacionEntradasUseCase } from '../application/crear-asignacion-entradas.use-case';
+import { CrearCompromisoPagoUseCase } from '../application/crear-compromiso-pago.use-case';
 import { CrearEventoUseCase } from '../application/crear-evento.use-case';
 import { CrearTipoEntradaUseCase } from '../application/crear-tipo-entrada.use-case';
 import { EditarEventoUseCase } from '../application/editar-evento.use-case';
@@ -16,8 +17,10 @@ import { EliminarAsignacionEntradasUseCase } from '../application/eliminar-asign
 import { EliminarGastoEventoUseCase } from '../application/eliminar-gasto-evento.use-case';
 import { EliminarIngresoEventoUseCase } from '../application/eliminar-ingreso-evento.use-case';
 import { EliminarTipoEntradaUseCase } from '../application/eliminar-tipo-entrada.use-case';
+import { EliminarCompromisoPagoUseCase } from '../application/eliminar-compromiso-pago.use-case';
 import { EliminarVentaEntradaUseCase } from '../application/eliminar-venta-entrada.use-case';
 import { ListarAsignacionesUseCase } from '../application/listar-asignaciones.use-case';
+import { ListarCompromisosPagoUseCase } from '../application/listar-compromisos-pago.use-case';
 import { ListarEventosUseCase } from '../application/listar-eventos.use-case';
 import { ListarGastosEventoUseCase } from '../application/listar-gastos-evento.use-case';
 import { ListarIngresosEventoUseCase } from '../application/listar-ingresos-evento.use-case';
@@ -26,29 +29,35 @@ import { ListarVentasEntradaUseCase } from '../application/listar-ventas-entrada
 import { ObtenerDisponibilidadEntradasUseCase } from '../application/obtener-disponibilidad-entradas.use-case';
 import { ObtenerEventoUseCase } from '../application/obtener-evento.use-case';
 import { ObtenerResumenEventoUseCase } from '../application/obtener-resumen-evento.use-case';
+import { CompromisoPagoTransaccionPort } from '../application/ports/compromiso-pago-transaccion.port';
 import { EventoTransaccionPort } from '../application/ports/evento-transaccion.port';
+import { RegistrarAbonoCompromisoUseCase } from '../application/registrar-abono-compromiso.use-case';
 import { RegistrarGastoEventoUseCase } from '../application/registrar-gasto-evento.use-case';
 import { RegistrarIngresoEventoUseCase } from '../application/registrar-ingreso-evento.use-case';
 import { RegistrarVentaEntradaUseCase } from '../application/registrar-venta-entrada.use-case';
 import { AsignacionEntradasRepository } from '../domain/asignacion-entradas.repository';
+import { CompromisoPagoEventoRepository } from '../domain/compromiso-pago-evento.repository';
 import { EventoRepository } from '../domain/evento.repository';
 import { GastoEventoRepository } from '../domain/gasto-evento.repository';
 import { IngresoEventoRepository } from '../domain/ingreso-evento.repository';
 import { TipoEntradaRepository } from '../domain/tipo-entrada.repository';
 import { VentaEntradaRepository } from '../domain/venta-entrada.repository';
 import { AsignacionEntradasRepositoryPrisma } from './asignacion-entradas.repository.prisma';
+import { CompromisoPagoEventoRepositoryPrisma } from './compromiso-pago-evento.repository.prisma';
+import { CompromisoPagoTransaccionPrisma } from './compromiso-pago-transaccion.prisma';
 import { EventoRepositoryPrisma } from './evento.repository.prisma';
 import { EventoTransaccionPrisma } from './evento-transaccion.prisma';
 import { EventsController } from './events.controller';
 import { GastoEventoRepositoryPrisma } from './gasto-evento.repository.prisma';
 import { IngresoEventoRepositoryPrisma } from './ingreso-evento.repository.prisma';
+import { PaymentCommitmentsController } from './payment-commitments.controller';
 import { TicketAssignmentsController } from './ticket-assignments.controller';
 import { TipoEntradaRepositoryPrisma } from './tipo-entrada.repository.prisma';
 import { VentaEntradaRepositoryPrisma } from './venta-entrada.repository.prisma';
 
 @Module({
   imports: [UsuariosModule],
-  controllers: [EventsController, TicketAssignmentsController],
+  controllers: [EventsController, TicketAssignmentsController, PaymentCommitmentsController],
   providers: [
     { provide: 'EventoRepository', useClass: EventoRepositoryPrisma },
     { provide: 'TipoEntradaRepository', useClass: TipoEntradaRepositoryPrisma },
@@ -56,7 +65,9 @@ import { VentaEntradaRepositoryPrisma } from './venta-entrada.repository.prisma'
     { provide: 'IngresoEventoRepository', useClass: IngresoEventoRepositoryPrisma },
     { provide: 'GastoEventoRepository', useClass: GastoEventoRepositoryPrisma },
     { provide: 'VentaEntradaRepository', useClass: VentaEntradaRepositoryPrisma },
+    { provide: 'CompromisoPagoEventoRepository', useClass: CompromisoPagoEventoRepositoryPrisma },
     { provide: 'EventoTransaccionPort', useClass: EventoTransaccionPrisma },
+    { provide: 'CompromisoPagoTransaccionPort', useClass: CompromisoPagoTransaccionPrisma },
     {
       provide: CrearEventoUseCase,
       useFactory: (repo: EventoRepository) => new CrearEventoUseCase(repo),
@@ -246,6 +257,29 @@ import { VentaEntradaRepositoryPrisma } from './venta-entrada.repository.prisma'
         ventaRepo: VentaEntradaRepository,
       ) => new ObtenerDisponibilidadEntradasUseCase(tipoRepo, asignacionRepo, ventaRepo),
       inject: ['TipoEntradaRepository', 'AsignacionEntradasRepository', 'VentaEntradaRepository'],
+    },
+    {
+      provide: CrearCompromisoPagoUseCase,
+      useFactory: (repo: CompromisoPagoEventoRepository, eventoRepo: EventoRepository) =>
+        new CrearCompromisoPagoUseCase(repo, eventoRepo),
+      inject: ['CompromisoPagoEventoRepository', 'EventoRepository'],
+    },
+    {
+      provide: ListarCompromisosPagoUseCase,
+      useFactory: (repo: CompromisoPagoEventoRepository) => new ListarCompromisosPagoUseCase(repo),
+      inject: ['CompromisoPagoEventoRepository'],
+    },
+    {
+      provide: EliminarCompromisoPagoUseCase,
+      useFactory: (repo: CompromisoPagoEventoRepository, eventoRepo: EventoRepository) =>
+        new EliminarCompromisoPagoUseCase(repo, eventoRepo),
+      inject: ['CompromisoPagoEventoRepository', 'EventoRepository'],
+    },
+    {
+      provide: RegistrarAbonoCompromisoUseCase,
+      useFactory: (transaccion: CompromisoPagoTransaccionPort) =>
+        new RegistrarAbonoCompromisoUseCase(transaccion),
+      inject: ['CompromisoPagoTransaccionPort'],
     },
   ],
 })

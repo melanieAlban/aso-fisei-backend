@@ -358,9 +358,10 @@ model Evento {
   motivoAnulacion    String?
   usuarioAnulacionId String?
 
-  tiposEntrada TipoEntrada[]
-  ingresos     IngresoEvento[]
-  gastos       GastoEvento[]
+  tiposEntrada      TipoEntrada[]
+  ingresos          IngresoEvento[]
+  gastos            GastoEvento[]
+  compromisosPago   CompromisoPagoEvento[]
 
   @@map("eventos")
 }
@@ -458,6 +459,23 @@ model GastoEvento {
   evento Evento @relation(fields: [eventoId], references: [id])
 
   @@map("gastos_evento")
+}
+
+// Seguimiento de un pago pendiente del evento (ej. alquiler del lugar):
+// cuanto cuesta en total, cuanto ya se ha pagado. Cada abono registrado
+// tambien genera un GastoEvento real para que cuente en el resumen
+// financiero del evento — este modelo es solo el rastreo del total/saldo.
+model CompromisoPagoEvento {
+  id          String   @id @default(uuid())
+  eventoId    String
+  descripcion String
+  montoTotal  Decimal  @db.Decimal(10, 2)
+  montoPagado Decimal  @db.Decimal(10, 2) @default(0)
+  fecha       DateTime @default(now())
+
+  evento Evento @relation(fields: [eventoId], references: [id])
+
+  @@map("compromisos_pago_evento")
 }
 
 // Temporizadores visuales compartidos (ej. alquiler de la billa): cualquier
