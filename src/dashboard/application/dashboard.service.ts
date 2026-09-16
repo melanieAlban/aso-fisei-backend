@@ -48,7 +48,7 @@ interface VentaPorDia {
 }
 
 export interface DashboardVendedor {
-  ventasHoy: VentasResumen;
+  ventasHoy: { cantidadTransacciones: number };
   productosPocoStock: ProductosPocoStock;
 }
 
@@ -76,7 +76,10 @@ export class DashboardService {
     ]);
 
     if (!esAdmin) {
-      return { ventasHoy, productosPocoStock };
+      return {
+        ventasHoy: { cantidadTransacciones: ventasHoy.cantidadTransacciones },
+        productosPocoStock,
+      };
     }
 
     const [cajaActual, fondoGeneral, productosMasVendidos, gastosDelMes, deudasPendientes, ventasUltimos7Dias] =
