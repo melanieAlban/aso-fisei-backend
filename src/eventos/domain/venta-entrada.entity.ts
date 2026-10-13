@@ -1,4 +1,4 @@
-export type MetodoPagoVentaEntrada = 'EFECTIVO' | 'TRANSFERENCIA';
+export type MetodoPagoVentaEntrada = 'EFECTIVO' | 'TRANSFERENCIA' | null;
 
 export class VentaEntrada {
   constructor(
@@ -10,6 +10,8 @@ export class VentaEntrada {
     public readonly monto: number,
     public readonly metodoPago: MetodoPagoVentaEntrada,
     public readonly fecha: Date,
+    public readonly montoEfectivo: number = 0,
+    public readonly montoTransferencia: number = 0,
   ) {
     if (cantidad <= 0) {
       throw new Error('La cantidad debe ser mayor a 0');
@@ -19,6 +21,12 @@ export class VentaEntrada {
     }
     if (monto < 0) {
       throw new Error('El monto no puede ser negativo');
+    }
+    if (montoEfectivo < 0 || montoTransferencia < 0) {
+      throw new Error('Los montos de efectivo y transferencia no pueden ser negativos');
+    }
+    if (Math.round((montoEfectivo + montoTransferencia) * 100) !== Math.round(monto * 100)) {
+      throw new Error('La suma de efectivo y transferencia debe ser igual al monto de la venta');
     }
   }
 }
