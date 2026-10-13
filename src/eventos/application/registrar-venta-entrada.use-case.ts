@@ -2,7 +2,7 @@ import { ConflictError, NotFoundError } from '../../shared/domain/errors';
 import { AsignacionEntradasRepository } from '../domain/asignacion-entradas.repository';
 import { EventoRepository } from '../domain/evento.repository';
 import { TipoEntradaRepository } from '../domain/tipo-entrada.repository';
-import { MetodoPagoVentaEntrada, VentaEntrada } from '../domain/venta-entrada.entity';
+import { VentaEntrada } from '../domain/venta-entrada.entity';
 import { VentaEntradaRepository } from '../domain/venta-entrada.repository';
 
 function redondear(valor: number): number {
@@ -22,7 +22,8 @@ export class RegistrarVentaEntradaUseCase {
     usuarioId: string;
     cantidad: number;
     esCombo: boolean;
-    metodoPago: MetodoPagoVentaEntrada;
+    montoEfectivo: number;
+    montoTransferencia: number;
   }): Promise<VentaEntrada> {
     const tipoEntrada = await this.tipoEntradaRepository.buscarPorId(datos.tipoEntradaId);
 
@@ -45,9 +46,21 @@ export class RegistrarVentaEntradaUseCase {
 
     const cantidadEntradas = datos.esCombo ? datos.cantidad * tipoEntrada.cantidadCombo! : datos.cantidad;
     const cantidadCombo = datos.esCombo ? cantidadEntradas : 0;
+    // El monto SIEMPRE se calcula aquí (cantidad x precio) — nunca se confía
+    // en un total enviado por el cliente. Lo único que viene del cliente es
+    // cómo se reparte ese monto entre efectivo y transferencia (pago único o
+    // mixto), y esa suma debe coincidir exactamente.
     const monto = redondear(
       datos.esCombo ? datos.cantidad * tipoEntrada.precioCombo! : datos.cantidad * tipoEntrada.precio,
     );
+
+    if (Math.round((datos.montoEfectivo + datos.montoTransferencia) * 100) !== Math.round(monto * 100)) {
+      throw new ConflictError(
+        `La suma de efectivo y transferencia (${(datos.montoEfectivo + datos.montoTransferencia).toFixed(2)}) no coincide con el monto de la venta (${monto.toFixed(2)})`,
+      );
+    }
+    const metodoPago =
+      datos.montoTransferencia === 0 ? 'EFECTIVO' : datos.montoEfectivo === 0 ? 'TRANSFERENCIA' : null;
 
     const [asignaciones, ventas] = await Promise.all([
       this.asignacionRepository.listarPorEvento(evento.id),
@@ -73,8 +86,10 @@ export class RegistrarVentaEntradaUseCase {
       cantidadEntradas,
       cantidadCombo,
       monto,
-      datos.metodoPago,
+      metodoPago,
       new Date(),
+      datos.montoEfectivo,
+      datos.montoTransferencia,
     );
 
     return this.ventaRepository.crear(venta);

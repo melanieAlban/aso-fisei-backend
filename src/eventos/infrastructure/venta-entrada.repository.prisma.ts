@@ -18,6 +18,8 @@ export class VentaEntradaRepositoryPrisma implements VentaEntradaRepository {
         cantidadCombo: venta.cantidadCombo,
         monto: venta.monto,
         metodoPago: venta.metodoPago,
+        montoEfectivo: venta.montoEfectivo,
+        montoTransferencia: venta.montoTransferencia,
         fecha: venta.fecha,
       },
     });
@@ -53,6 +55,8 @@ export class VentaEntradaRepositoryPrisma implements VentaEntradaRepository {
       registro.monto.toNumber(),
       registro.metodoPago,
       registro.fecha,
+      registro.montoEfectivo.toNumber(),
+      registro.montoTransferencia.toNumber(),
     );
   }
 }

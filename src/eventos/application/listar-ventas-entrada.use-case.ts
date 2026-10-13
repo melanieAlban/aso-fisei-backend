@@ -11,6 +11,8 @@ export interface VentaEntradaConVendedor {
   cantidadCombo: number;
   monto: number;
   metodoPago: MetodoPagoVentaEntrada;
+  montoEfectivo: number;
+  montoTransferencia: number;
   fecha: Date;
 }
 
@@ -36,6 +38,8 @@ export class ListarVentasEntradaUseCase {
       cantidadCombo: venta.cantidadCombo,
       monto: venta.monto,
       metodoPago: venta.metodoPago,
+      montoEfectivo: venta.montoEfectivo,
+      montoTransferencia: venta.montoTransferencia,
       fecha: venta.fecha,
     }));
   }

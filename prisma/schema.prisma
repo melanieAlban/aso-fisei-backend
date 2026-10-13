@@ -425,7 +425,12 @@ model VentaEntrada {
   // Cuantas de las vendidas en esta transaccion fueron por precio de combo.
   cantidadCombo Int        @default(0)
   monto         Decimal    @db.Decimal(10, 2)
-  metodoPago    MetodoPago
+  // Informativo/derivado: EFECTIVO o TRANSFERENCIA si se pago enteramente en
+  // una moneda, null si fue pago mixto (ver montoEfectivo/montoTransferencia,
+  // que son la fuente de verdad para el cierre del evento).
+  metodoPago         MetodoPago?
+  montoEfectivo      Decimal    @db.Decimal(10, 2) @default(0)
+  montoTransferencia Decimal    @db.Decimal(10, 2) @default(0)
   fecha         DateTime   @default(now())
 
   tipoEntrada TipoEntrada @relation(fields: [tipoEntradaId], references: [id])

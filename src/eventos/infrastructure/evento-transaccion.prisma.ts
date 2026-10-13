@@ -40,10 +40,13 @@ export class EventoTransaccionPrisma implements EventoTransaccionPort {
         where: { tipoEntrada: { eventoId: datos.eventoId } },
         _sum: { dineroRecibido: true },
       });
-      const ingresosVentaDirecta = await tx.ventaEntrada.groupBy({
-        by: ['metodoPago'],
+      // ventaEntrada admite pago mixto (montoEfectivo/montoTransferencia), asi
+      // que no se puede agrupar por metodoPago (las filas mixtas tienen
+      // metodoPago null) — se suman directamente las dos columnas, que son la
+      // fuente de verdad sin importar si el pago fue unico o mixto.
+      const ingresosVentaDirectaAgg = await tx.ventaEntrada.aggregate({
         where: { tipoEntrada: { eventoId: datos.eventoId } },
-        _sum: { monto: true },
+        _sum: { montoEfectivo: true, montoTransferencia: true },
       });
 
       const sumarMonto = (
@@ -59,11 +62,11 @@ export class EventoTransaccionPrisma implements EventoTransaccionPort {
       const ingresosEfectivo =
         sumarMonto(ingresosManuales, 'EFECTIVO') +
         sumarDinero(ingresosEntradas, 'EFECTIVO') +
-        sumarMonto(ingresosVentaDirecta, 'EFECTIVO');
+        (ingresosVentaDirectaAgg._sum.montoEfectivo?.toNumber() ?? 0);
       const ingresosTransferencia =
         sumarMonto(ingresosManuales, 'TRANSFERENCIA') +
         sumarDinero(ingresosEntradas, 'TRANSFERENCIA') +
-        sumarMonto(ingresosVentaDirecta, 'TRANSFERENCIA');
+        (ingresosVentaDirectaAgg._sum.montoTransferencia?.toNumber() ?? 0);
       const gastosEfectivo = sumarMonto(gastosManuales, 'EFECTIVO');
       const gastosTransferencia = sumarMonto(gastosManuales, 'TRANSFERENCIA');
 

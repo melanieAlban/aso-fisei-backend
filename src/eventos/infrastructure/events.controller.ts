@@ -218,7 +218,8 @@ export class EventsController {
       usuarioId: req.user.sub,
       cantidad: dto.cantidad,
       esCombo: dto.esCombo,
-      metodoPago: dto.metodoPago,
+      montoEfectivo: dto.montoEfectivo,
+      montoTransferencia: dto.montoTransferencia,
     });
   }
 
