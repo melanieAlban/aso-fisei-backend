@@ -16,6 +16,8 @@ export class AsignacionEntradas {
     public readonly telefono: string | null = null,
     public readonly semestre: string | null = null,
     public readonly carrera: string | null = null,
+    public readonly montoEfectivo: number = 0,
+    public readonly montoTransferencia: number = 0,
   ) {
     if (nombreReferencia.trim().length === 0) {
       throw new Error('La referencia es requerida');
@@ -40,6 +42,12 @@ export class AsignacionEntradas {
     }
     if (dineroRecibido > 0 && !metodoPago) {
       throw new Error('Debe indicar el método de pago cuando hay dinero recibido');
+    }
+    if (montoEfectivo < 0 || montoTransferencia < 0) {
+      throw new Error('Los montos de efectivo y transferencia no pueden ser negativos');
+    }
+    if (Math.round((montoEfectivo + montoTransferencia) * 100) !== Math.round(dineroRecibido * 100)) {
+      throw new Error('La suma de efectivo y transferencia debe ser igual al dinero recibido');
     }
   }
 }

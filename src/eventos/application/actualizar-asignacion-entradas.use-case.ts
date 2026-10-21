@@ -1,5 +1,5 @@
 import { ConflictError, NotFoundError } from '../../shared/domain/errors';
-import { AsignacionEntradas, MetodoPagoAsignacion } from '../domain/asignacion-entradas.entity';
+import { AsignacionEntradas } from '../domain/asignacion-entradas.entity';
 import { AsignacionEntradasRepository } from '../domain/asignacion-entradas.repository';
 import { EventoRepository } from '../domain/evento.repository';
 import { TipoEntradaRepository } from '../domain/tipo-entrada.repository';
@@ -22,7 +22,8 @@ export class ActualizarAsignacionEntradasUseCase {
     cantidadVendidaCombo?: number;
     cantidadDevuelta?: number;
     dineroRecibido?: number;
-    metodoPago?: MetodoPagoAsignacion;
+    montoEfectivo?: number;
+    montoTransferencia?: number;
   }): Promise<AsignacionEntradas> {
     const actual = await this.asignacionRepository.buscarPorId(datos.id);
 
@@ -45,6 +46,19 @@ export class ActualizarAsignacionEntradasUseCase {
       throw new ConflictError('El evento ya está cerrado');
     }
 
+    const montoEfectivo = datos.montoEfectivo ?? actual.montoEfectivo;
+    const montoTransferencia = datos.montoTransferencia ?? actual.montoTransferencia;
+    // Derivado de los montos: null si no hay nada recibido o si fue mixto,
+    // EFECTIVO/TRANSFERENCIA si se recibio enteramente en una moneda.
+    const metodoPago =
+      montoEfectivo === 0 && montoTransferencia === 0
+        ? null
+        : montoTransferencia === 0
+          ? 'EFECTIVO'
+          : montoEfectivo === 0
+            ? 'TRANSFERENCIA'
+            : null;
+
     const actualizada = new AsignacionEntradas(
       actual.id,
       actual.tipoEntradaId,
@@ -54,12 +68,14 @@ export class ActualizarAsignacionEntradasUseCase {
       datos.cantidadVendida ?? actual.cantidadVendida,
       datos.cantidadDevuelta ?? actual.cantidadDevuelta,
       datos.dineroRecibido ?? actual.dineroRecibido,
-      datos.metodoPago ?? actual.metodoPago,
+      metodoPago,
       actual.fecha,
       datos.cantidadVendidaCombo ?? actual.cantidadVendidaCombo,
       datos.telefono !== undefined ? datos.telefono : actual.telefono,
       datos.semestre !== undefined ? datos.semestre : actual.semestre,
       datos.carrera !== undefined ? datos.carrera : actual.carrera,
+      montoEfectivo,
+      montoTransferencia,
     );
 
     return this.asignacionRepository.actualizar(actualizada);

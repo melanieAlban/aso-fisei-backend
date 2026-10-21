@@ -1,5 +1,4 @@
-import { MetodoPago } from '@prisma/client';
-import { IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, Min } from 'class-validator';
+import { IsInt, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, Min } from 'class-validator';
 
 export class ActualizarAsignacionEntradasDto {
   @IsOptional()
@@ -44,7 +43,15 @@ export class ActualizarAsignacionEntradasDto {
   @Min(0)
   dineroRecibido?: number;
 
+  // Cuánto de lo recibido fue en cada moneda — uno puede ser 0 (pago único) o
+  // ambos > 0 (pago mixto). Su suma debe ser igual a dineroRecibido.
   @IsOptional()
-  @IsEnum(MetodoPago)
-  metodoPago?: MetodoPago;
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  montoEfectivo?: number;
+
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  montoTransferencia?: number;
 }

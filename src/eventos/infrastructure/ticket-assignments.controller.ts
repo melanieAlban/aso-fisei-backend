@@ -29,7 +29,8 @@ export class TicketAssignmentsController {
       cantidadVendidaCombo: dto.cantidadVendidaCombo,
       cantidadDevuelta: dto.cantidadDevuelta,
       dineroRecibido: dto.dineroRecibido,
-      metodoPago: dto.metodoPago,
+      montoEfectivo: dto.montoEfectivo,
+      montoTransferencia: dto.montoTransferencia,
     });
   }
 
