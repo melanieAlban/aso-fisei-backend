@@ -24,6 +24,8 @@ export class AsignacionEntradasRepositoryPrisma implements AsignacionEntradasRep
         cantidadDevuelta: asignacion.cantidadDevuelta,
         dineroRecibido: asignacion.dineroRecibido,
         metodoPago: asignacion.metodoPago,
+        montoEfectivo: asignacion.montoEfectivo,
+        montoTransferencia: asignacion.montoTransferencia,
         fecha: asignacion.fecha,
       },
     });
@@ -45,6 +47,8 @@ export class AsignacionEntradasRepositoryPrisma implements AsignacionEntradasRep
         cantidadDevuelta: asignacion.cantidadDevuelta,
         dineroRecibido: asignacion.dineroRecibido,
         metodoPago: asignacion.metodoPago,
+        montoEfectivo: asignacion.montoEfectivo,
+        montoTransferencia: asignacion.montoTransferencia,
       },
     });
 
@@ -84,6 +88,8 @@ export class AsignacionEntradasRepositoryPrisma implements AsignacionEntradasRep
       registro.telefono,
       registro.semestre,
       registro.carrera,
+      registro.montoEfectivo.toNumber(),
+      registro.montoTransferencia.toNumber(),
     );
   }
 }

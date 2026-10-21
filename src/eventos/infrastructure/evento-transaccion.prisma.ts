@@ -35,15 +35,15 @@ export class EventoTransaccionPrisma implements EventoTransaccionPort {
         where: { eventoId: datos.eventoId },
         _sum: { monto: true },
       });
-      const ingresosEntradas = await tx.asignacionEntradas.groupBy({
-        by: ['metodoPago'],
+      // Tanto asignacionEntradas como ventaEntrada admiten pago mixto
+      // (montoEfectivo/montoTransferencia), asi que no se puede agrupar por
+      // metodoPago (las filas mixtas tienen metodoPago null) — se suman
+      // directamente las dos columnas, que son la fuente de verdad sin
+      // importar si el pago fue unico o mixto.
+      const ingresosEntradasAgg = await tx.asignacionEntradas.aggregate({
         where: { tipoEntrada: { eventoId: datos.eventoId } },
-        _sum: { dineroRecibido: true },
+        _sum: { montoEfectivo: true, montoTransferencia: true },
       });
-      // ventaEntrada admite pago mixto (montoEfectivo/montoTransferencia), asi
-      // que no se puede agrupar por metodoPago (las filas mixtas tienen
-      // metodoPago null) — se suman directamente las dos columnas, que son la
-      // fuente de verdad sin importar si el pago fue unico o mixto.
       const ingresosVentaDirectaAgg = await tx.ventaEntrada.aggregate({
         where: { tipoEntrada: { eventoId: datos.eventoId } },
         _sum: { montoEfectivo: true, montoTransferencia: true },
@@ -54,18 +54,13 @@ export class EventoTransaccionPrisma implements EventoTransaccionPort {
         metodo: MetodoPago,
       ): number => grupos.find((g) => g.metodoPago === metodo)?._sum.monto?.toNumber() ?? 0;
 
-      const sumarDinero = (
-        grupos: { metodoPago: MetodoPago | null; _sum: { dineroRecibido: Prisma.Decimal | null } }[],
-        metodo: MetodoPago,
-      ): number => grupos.find((g) => g.metodoPago === metodo)?._sum.dineroRecibido?.toNumber() ?? 0;
-
       const ingresosEfectivo =
         sumarMonto(ingresosManuales, 'EFECTIVO') +
-        sumarDinero(ingresosEntradas, 'EFECTIVO') +
+        (ingresosEntradasAgg._sum.montoEfectivo?.toNumber() ?? 0) +
         (ingresosVentaDirectaAgg._sum.montoEfectivo?.toNumber() ?? 0);
       const ingresosTransferencia =
         sumarMonto(ingresosManuales, 'TRANSFERENCIA') +
-        sumarDinero(ingresosEntradas, 'TRANSFERENCIA') +
+        (ingresosEntradasAgg._sum.montoTransferencia?.toNumber() ?? 0) +
         (ingresosVentaDirectaAgg._sum.montoTransferencia?.toNumber() ?? 0);
       const gastosEfectivo = sumarMonto(gastosManuales, 'EFECTIVO');
       const gastosTransferencia = sumarMonto(gastosManuales, 'TRANSFERENCIA');
