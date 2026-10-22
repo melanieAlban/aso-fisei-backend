@@ -40,14 +40,12 @@ export class AsignacionEntradas {
     if (dineroRecibido < 0) {
       throw new Error('El dinero recibido no puede ser negativo');
     }
-    if (dineroRecibido > 0 && !metodoPago) {
-      throw new Error('Debe indicar el método de pago cuando hay dinero recibido');
-    }
     if (montoEfectivo < 0 || montoTransferencia < 0) {
       throw new Error('Los montos de efectivo y transferencia no pueden ser negativos');
     }
-    if (Math.round((montoEfectivo + montoTransferencia) * 100) !== Math.round(dineroRecibido * 100)) {
-      throw new Error('La suma de efectivo y transferencia debe ser igual al dinero recibido');
-    }
+    // No se exige que montoEfectivo + montoTransferencia == dineroRecibido:
+    // este dato lo escribe a mano quien registra la asignación (puede cobrar
+    // a un precio distinto al esperado, dar vuelto, redondear, etc.), así que
+    // se guarda tal cual lo reporten sin forzar que cuadre exacto.
   }
 }
